@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearHelp — Plain-English Tech Help</title>
+<style>
+:root{
+  --bg:#fbf9f4;
+  --panel:#ffffff;
+  --text:#1f2937;
+  --muted:#5b6472;
+  --border:#e3ddd0;
+  --accent:#1d4ed8;
+  --accent-dark:#1741a6;
+  --accent-soft:#dbe8ff;
+  --good:#15803d;
+  --warn:#b45309;
+  --warn-bg:#fff4e0;
+  --scale:1;
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+html{ font-size:calc(18px * var(--scale)); }
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  line-height:1.6;
+}
+a{ color:var(--accent); }
+
+/* ---------- Top bar ---------- */
+.topbar{
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  padding:14px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand-mark{
+  width:2.6rem; height:2.6rem; border-radius:12px;
+  background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; flex-shrink:0;
+}
+.brand-text h1{ font-size:1.5rem; font-weight:800; }
+.brand-text p{ font-size:0.85rem; color:var(--muted); }
+.topbar-controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.ctrl-btn{
+  border:2px solid var(--border);
+  background:var(--panel);
+  color:var(--text);
+  border-radius:10px;
+  padding:0.5rem 0.85rem;
+  font-size:0.95rem;
+  font-weight:700;
+  cursor:pointer;
+  min-height:44px;
+}
+.ctrl-btn:hover{ border-color:var(--accent); color:var(--accent); }
+.ctrl-group{ display:flex; align-items:center; gap:4px; border:2px solid var(--border); border-radius:10px; padding:2px; }
+.ctrl-group .ctrl-btn{ border:none; }
+
+/* ---------- Hero ---------- */
+.hero{
+  max-width:900px;
+  margin:0 auto;
+  padding:28px 20px 8px;
+  text-align:center;
+}
+.hero h2{ font-size:1.6rem; margin-bottom:8px; }
+.hero p{ color:var(--muted); font-size:1.05rem; max-width:620px; margin:0 auto; }
+
+/* ---------- Quick topics ---------- */
+.topics{
+  max-width:900px;
+  margin:24px auto 0;
+  padding:0 20px;
+}
+.topics-label{ font-size:0.95rem; font-weight:700; color:var(--muted); margin-bottom:10px; }
+.topic-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:10px;
+}
+.topic-btn{
+  background:var(--panel);
+  border:2px solid var(--border);
+  border-radius:14px;
+  padding:14px 10px;
+  text-align:center;
+  cursor:pointer;
+  font-size:0.95rem;
+  font-weight:600;
+  color:var(--text);
+  min-height:76px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+}
+.topic-btn:hover{ border-color:var(--accent); background:var(--accent-soft); }
+.topic-emoji{ font-size:1.6rem; }
+.topic-btn.scam-btn{ border-color:var(--warn); background:var(--warn-bg); }
+.topic-btn.scam-btn:hover{ border-color:var(--warn); background:#ffe6bf; }
+
+/* ---------- Chat ---------- */
+.chat-wrap{
+  max-width:900px;
+  margin:28px auto 0;
+  padding:0 20px 20px;
+}
+.chat-panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(30,20,0,0.06);
+}
+.chat-log{
+  padding:20px;
+  min-height:280px;
+  max-height:56vh;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.msg{ display:flex; gap:10px; align-items:flex-start; max-width:100%; }
+.msg-avatar{
+  width:2.4rem; height:2.4rem; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem; flex-shrink:0;
+}
+.msg.bot .msg-avatar{ background:var(--accent-soft); }
+.msg.user{ flex-direction:row-reverse; margin-left:auto; }
+.msg.user .msg-avatar{ background:#eef2ff; }
+.bubble{
+  padding:14px 16px;
+  border-radius:14px;
+  font-size:1rem;
+  line-height:1.65;
+  max-width:600px;
+}
+.msg.bot .bubble{ background:#f4f6fb; border:1px solid var(--border); }
+.msg.user .bubble{ background:var(--accent); color:#fff; }
+.bubble h3{ font-size:1.05rem; margin-bottom:6px; }
+.bubble ol,.bubble ul{ margin:8px 0 8px 1.3rem; }
+.bubble li{ margin-bottom:6px; }
+.bubble .tip{
+  margin-top:10px; padding:10px 12px; border-radius:10px;
+  background:#eafaf0; border:1px solid #bfe8cf; color:var(--good); font-size:0.92rem;
+}
+.bubble .warn{
+  margin-top:10px; padding:10px 12px; border-radius:10px;
+  background:var(--warn-bg); border:1px solid #f0d19b; color:var(--warn); font-size:0.92rem; font-weight:600;
+}
+.typing-dots{ display:flex; gap:5px; padding:6px 0; }
+.typing-dots span{ width:8px; height:8px; border-radius:50%; background:var(--muted); opacity:.4; animation:tdot 1s infinite; }
+.typing-dots span:nth-child(2){ animation-delay:.15s; }
+.typing-dots span:nth-child(3){ animation-delay:.3s; }
+@keyframes tdot{ 0%,100%{opacity:.25} 50%{opacity:.9} }
+
+.chat-input-row{
+  border-top:1px solid var(--border);
+  padding:14px 16px;
+  display:flex;
+  gap:10px;
+  align-items:flex-end;
+  background:var(--panel);
+}
+#userInput{
+  flex:1;
+  min-height:52px;
+  max-height:160px;
+  resize:none;
+  border:2px solid var(--border);
+  border-radius:12px;
+  padding:12px 14px;
+  font-size:1.05rem;
+  font-family:inherit;
+  color:var(--text);
+}
+#userInput:focus{ outline:none; border-color:var(--accent); }
+.send-btn{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:0 22px;
+  min-height:52px;
+  font-size:1.05rem;
+  font-weight:700;
+  cursor:pointer;
+  display:flex; align-items:center; gap:8px;
+}
+.send-btn:hover{ background:var(--accent-dark); }
+.send-btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+/* ---------- Footer / settings ---------- */
+footer{
+  max-width:900px;
+  margin:0 auto;
+  padding:8px 20px 40px;
+  color:var(--muted);
+  font-size:0.85rem;
+  text-align:center;
+}
+footer .disclaimer{ margin-bottom:10px; }
+.footer-links{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+.link-btn{ background:none; border:none; color:var(--accent); cursor:pointer; font-size:0.85rem; text-decoration:underline; font-family:inherit; }
+
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(20,15,5,0.45);
+  display:none; align-items:center; justify-content:center; padding:20px; z-index:50;
+}
+.modal-overlay.open{ display:flex; }
+.modal{
+  background:var(--panel); border-radius:16px; max-width:460px; width:100%;
+  padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.3);
+}
+.modal h3{ font-size:1.25rem; margin-bottom:10px; }
+.modal p{ color:var(--muted); font-size:0.95rem; margin-bottom:14px; }
+.modal input{
+  width:100%; padding:12px 14px; border:2px solid var(--border); border-radius:10px;
+  font-size:1rem; margin-bottom:14px; font-family:inherit;
+}
+.modal-actions{ display:flex; gap:10px; justify-content:flex-end; }
+.modal-actions button{ min-height:44px; border-radius:10px; padding:0 18px; font-size:0.95rem; font-weight:700; cursor:pointer; }
+.btn-secondary{ background:var(--bg); border:2px solid var(--border); color:var(--text); }
+.btn-primary{ background:var(--accent); border:2px solid var(--accent); color:#fff; }
+.ai-badge{ display:inline-block; margin-left:6px; font-size:0.75rem; background:var(--accent-soft); color:var(--accent); padding:2px 8px; border-radius:8px; font-weight:700; vertical-align:middle; }
+
+@media(max-width:640px){
+  .hero h2{ font-size:1.35rem; }
+  .msg .bubble{ max-width:78vw; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">💬</div>
+    <div class="brand-text">
+      <h1>ClearHelp</h1>
+      <p>Plain-English tech help</p>
+    </div>
+  </div>
+  <div class="topbar-controls">
+    <div class="ctrl-group" role="group" aria-label="Text size">
+      <button class="ctrl-btn" onclick="changeScale(-1)" aria-label="Smaller text">A−</button>
+      <button class="ctrl-btn" onclick="changeScale(1)" aria-label="Larger text">A+</button>
+    </div>
+    <button class="ctrl-btn" onclick="openSettings()">⚙️ Settings</button>
+  </div>
+</div>
+
+<div class="hero">
+  <h2>What can I help you with today?</h2>
+  <p>Ask me anything about your phone, computer, or the internet — I'll explain it in plain, simple steps. No tech talk, no judgment.</p>
+</div>
+
+<div class="topics">
+  <div class="topics-label">Common questions — just tap one:</div>
+  <div class="topic-grid" id="topicGrid"></div>
+</div>
+
+<div class="chat-wrap">
+  <div class="chat-panel">
+    <div class="chat-log" id="chatLog"></div>
+    <div class="chat-input-row">
+      <textarea id="userInput" rows="1" placeholder="Type your question here… e.g. &quot;my internet stopped working&quot;"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="handleSend()">Send ➤</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p class="disclaimer">ClearHelp gives general step-by-step guidance and is not a substitute for a trusted family member, your device's manufacturer, or professional support — especially for anything involving money or personal information.</p>
+  <div class="footer-links">
+    <button class="link-btn" onclick="clearChat()">Start a new conversation</button>
+    <button class="link-btn" onclick="openSettings()">Connect your own AI key (optional)</button>
+  </div>
+</footer>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3>Smarter answers (optional)</h3>
+    <p>ClearHelp already answers common questions on its own. If you'd like it to also handle questions outside that list, you can add your own free Google Gemini API key. It is saved only in this browser, never sent anywhere else, and never stored in this app's code.</p>
+    <input type="password" id="apiKeyInput" placeholder="Paste your Gemini API key here" autocomplete="off">
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="clearApiKey()">Remove key</button>
+      <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
+      <button class="btn-primary" onclick="saveApiKey()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ Text size ============ */
+let scaleStep = parseInt(localStorage.getItem('clearhelp_scale') || '0', 10);
+const SCALES = [0.85, 1, 1.15, 1.3];
+function applyScale(){
+  const idx = Math.max(0, Math.min(SCALES.length - 1, scaleStep + 1));
+  document.documentElement.style.setProperty('--scale', SCALES[idx]);
+}
+function changeScale(dir){
+  scaleStep = Math.max(-1, Math.min(2, scaleStep + dir));
+  localStorage.setItem('clearhelp_scale', scaleStep);
+  applyScale();
+}
+applyScale();
+
+/* ============ Settings modal / optional API key ============ */
+function openSettings(){
+  document.getElementById('apiKeyInput').value = localStorage.getItem('clearhelp_api_key') || '';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings(){ document.getElementById('settingsModal').classList.remove('open'); }
+function saveApiKey(){
+  const v = document.getElementById('apiKeyInput').value.trim();
+  if(v) localStorage.setItem('clearhelp_api_key', v);
+  closeSettings();
+}
+function clearApiKey(){
+  localStorage.removeItem('clearhelp_api_key');
+  document.getElementById('apiKeyInput').value = '';
+}
+
+/* ============ Knowledge base ============ */
+const KB = [
+  { id:'wifi', emoji:'📶', label:'Internet not working', keywords:['wifi','wi-fi','internet','no internet','not connecting','connection','router','offline'],
+    title:"Your Wi-Fi or internet isn't working",
+    steps:[
+      'Look at your Wi-Fi router (the small box with blinking lights) and make sure it is plugged in and turned on.',
+      'Unplug the router, wait 30 seconds, then plug it back in. Wait about 2 minutes for the lights to settle.',
+      'On your phone or computer, turn Wi-Fi off and back on in Settings.',
+      'Try opening a website again to see if it works now.',
+      'If it still does not work, try restarting your phone or computer too.'
+    ],
+    tip:"If nothing works after restarting everything, it may be an outage in your area — call your internet provider's support number." },
+
+  { id:'password', emoji:'🔑', label:'Forgot my password', keywords:['password','forgot','forgotten','locked out','reset password',"can't log in",'cant log in','sign in'],
+    title:'Resetting a forgotten password',
+    steps:[
+      'On the sign-in screen, look for a link that says "Forgot password?" and click it.',
+      'Enter the email address or phone number you used to create the account.',
+      'Check your email inbox (and your Spam or Junk folder) for a message with a reset link.',
+      'Click the link and follow the instructions to create a new password.',
+      'Choose something you can remember, and write it down somewhere safe if that helps.'
+    ] },
+
+  { id:'phishing', emoji:'✉️', label:'A suspicious email', keywords:['suspicious email','phishing','scam email','weird email','strange email','email asking for'],
+    title:'You received a suspicious email',
+    steps:[
+      'Do not click any links or open any attachments in the email.',
+      'Look closely at the sender\'s email address — scammers often use addresses that look almost right but are not.',
+      'Remember: real banks, government agencies, and companies will never ask for your password or Social Security number by email.',
+      'If you are not sure, contact the company directly using a phone number from their official website — not one from the email.',
+      'Delete the email, or mark it as Spam/Junk.'
+    ],
+    warn:'If the email is threatening you or creating urgency ("act now or your account will be closed"), that is a major warning sign of a scam.' },
+
+  { id:'scamcall', emoji:'🚨', label:'Is this a scam?', keywords:['scam','robocall','scam call','someone called','suspicious call','gift card','wire money','irs called','social security called'],
+    title:'Recognizing a phone or online scam',
+    steps:[
+      'Never give out your passwords, bank details, or one-time codes to someone who called or messaged you.',
+      'Real government agencies and banks will never demand payment by gift card, wire transfer, or cryptocurrency.',
+      'If someone pressures you to act "right now" or threatens arrest, that is a huge red flag — real institutions do not do this.',
+      'Hang up or stop replying. If you are worried it might be real, call the organization back using the number on your bank card or their official website.',
+      'Talk to a family member you trust before sending any money or information.'
+    ],
+    warn:"When in doubt, don't send money or information — you can always verify first and it's never too late to say no." },
+
+  { id:'videocall', emoji:'📹', label:'Video calling family', keywords:['video call','zoom','facetime','skype','see my grandkids','video chat'],
+    title:'Making a video call to family',
+    steps:[
+      'Open the video call app (FaceTime, Zoom, or WhatsApp, for example).',
+      'Find your family member in your Contacts list, or open the message/invite they sent you.',
+      'Tap the camera icon (📹) next to their name to start a video call.',
+      'Wait for them to answer — you should see their face appear on your screen.',
+      'To end the call, tap the red button, usually at the bottom of the screen.'
+    ] },
+
+  { id:'textsize', emoji:'🔍', label:'Make text bigger', keywords:['text too small',"can't read",'cant read','increase text size','font size','zoom in','make it bigger'],
+    title:'Making text easier to read',
+    steps:[
+      'On this page, you can use the "A+" button at the top to make everything bigger right now.',
+      'On your phone: open Settings, then Display & Brightness (iPhone) or Display (Android), then look for "Text Size" or "Font Size".',
+      'On a computer: hold Ctrl and press + (or Cmd and + on a Mac) while viewing a webpage to zoom in.',
+      'You can also try pinching outward with two fingers on a touchscreen to zoom in on most apps.'
+    ] },
+
+  { id:'slow', emoji:'🐢', label:'Computer running slow', keywords:['slow','running slow','freezing','laggy','frozen'],
+    title:'Speeding up a slow computer',
+    steps:[
+      'Restart the computer — this alone often fixes it.',
+      'Close programs or browser tabs you are not using.',
+      'Check for and install any pending software updates.',
+      'Make sure there is free storage space — delete old files or photos you no longer need.',
+      'If it is still slow, a trusted family member or repair shop can check for bigger issues.'
+    ] },
+
+  { id:'printer', emoji:'🖨️', label:'Printer not printing', keywords:['printer','print','wont print',"won't print",'not printing'],
+    title:'Fixing a printer that will not print',
+    steps:[
+      'Check that the printer is turned on, has paper, and has ink or toner.',
+      'Make sure the printer is connected — either plugged in with a cable or connected to the same Wi-Fi as your computer.',
+      'Restart both the printer and your computer.',
+      'On your computer, check that the correct printer is selected as the "default printer" in Settings.',
+      'Try printing a simple test page to confirm it is working.'
+    ] },
+
+  { id:'volume', emoji:'🔊', label:"Can't hear anything", keywords:['volume',"can't hear",'cant hear','no sound','sound not working','too quiet'],
+    title:'Fixing sound or volume problems',
+    steps:[
+      'Check the volume buttons on the side of your device, or the volume slider in Settings, and make sure it is turned up.',
+      'Make sure the device is not on silent or "mute" mode.',
+      'Check whether headphones or a speaker are connected — sound may be playing through those instead.',
+      'Check the volume control inside the specific app you are using (some apps have their own volume setting).',
+      'Restart the device if the sound still is not working.'
+    ] },
+
+  { id:'mouse', emoji:'🖱️', label:'Mouse or keyboard issues', keywords:['mouse not working','keyboard not working','no cursor','mouse','keyboard'],
+    title:'Mouse or keyboard not responding',
+    steps:[
+      'If it is wireless, check that the batteries are not dead and replace them if needed.',
+      'Make sure it is properly plugged in, or turned on and paired if it is Bluetooth.',
+      'Try unplugging it and plugging it into a different port on your computer.',
+      'Restart the computer with the mouse or keyboard still connected.'
+    ] },
+
+  { id:'backup', emoji:'🖼️', label:'Backing up photos', keywords:['backup photos','save photos','lose pictures','photos disappeared','back up my photos'],
+    title:'Backing up your photos so you never lose them',
+    steps:[
+      'Connect your phone to Wi-Fi.',
+      'Open a photo backup app such as Google Photos or Apple iCloud Photos.',
+      'Go into its Settings and turn on "Back up" or "iCloud Photos".',
+      'Leave your phone connected to Wi-Fi and charging overnight the first time — it may take a while for all your photos to upload.',
+      'Afterward, new photos will back up automatically in the background.'
+    ] },
+
+  { id:'popups', emoji:'🪟', label:'Annoying pop-ups', keywords:['pop up','pop-up','pop ups','ads','keeps opening windows'],
+    title:'Stopping pop-up windows and ads',
+    steps:[
+      'Do not click any buttons inside the pop-up, even ones that say "Close" — close it using the small X in a corner, or close the whole browser tab.',
+      'In your browser Settings, look for "Pop-ups" and make sure blocking is turned on.',
+      'Restart your browser if pop-ups keep appearing.',
+      'If a pop-up claims your computer has a virus and gives you a phone number to call, do not call it — this is almost always a scam.'
+    ],
+    warn:'A pop-up warning with a phone number to call is a common scam. Real security software never asks you to call a number from a pop-up.' },
+
+  { id:'virus', emoji:'🛡️', label:'Worried about a virus', keywords:['virus','malware','hacked','infected','computer infected'],
+    title:'Worried your device has a virus',
+    steps:[
+      'Try not to panic — many "virus" warnings are actually fake pop-ups designed to scare you.',
+      'Do not call any phone number shown in a scary pop-up message.',
+      'If you have antivirus software installed, open it and run a full scan.',
+      'Ask a trusted family member or a professional to take a look before you install anything new.',
+      'If you shared a password recently, change it from a different, trusted device.'
+    ] },
+
+  { id:'restart', emoji:'🔁', label:'How to restart my device', keywords:['restart','reboot','turn off and on','how do i restart'],
+    title:'Restarting your phone or computer',
+    steps:[
+      'On a computer: click the Start or Apple menu, then choose "Restart".',
+      'On an iPhone: press and hold the side button and a volume button until a slider appears, then drag the slider — then press and hold the side button again to turn it back on.',
+      'On an Android phone: press and hold the power button until a menu appears, then tap "Restart".',
+      'Wait about a minute for the device to fully turn back on.'
+    ] },
+
+  { id:'bluetooth', emoji:'🎧', label:'Connecting Bluetooth', keywords:['bluetooth','pairing','connect headphones','connect speaker'],
+    title:'Pairing a Bluetooth device',
+    steps:[
+      'Turn on Bluetooth on your phone or computer (in Settings).',
+      'Put your headphones or speaker into "pairing mode" — usually by holding its power button until a light blinks.',
+      'On your device, look under Bluetooth settings for the accessory\'s name in the list, then tap it to connect.',
+      'If asked for a code, try "0000" or check the accessory\'s instructions.'
+    ] },
+
+  { id:'appcrash', emoji:'📱', label:'An app keeps crashing', keywords:['app crashing','app wont open',"app won't open",'app not working','app freezes'],
+    title:'An app that will not open or keeps crashing',
+    steps:[
+      'Close the app completely and open it again.',
+      'Restart your phone or computer.',
+      'Check the app store to see if an update is available for the app, and install it.',
+      'If it still does not work, you can delete the app and reinstall it as a last step — your account information is usually saved and will still be there.'
+    ] },
+
+  { id:'attachment', emoji:'📎', label:'Sending a photo by email', keywords:['attach','attachment','send a photo by email','email a file','email a photo'],
+    title:'Attaching a photo or file to an email',
+    steps:[
+      'Open your email app and start a new message.',
+      'Look for a paperclip icon (📎) — tap it.',
+      'Choose "Photo Library" or "Files" and select the photo or file you want to send.',
+      'Wait for it to attach (you may see a small preview appear).',
+      'Finish writing your message and tap Send.'
+    ] },
+
+  { id:'screenshot', emoji:'📸', label:'Taking a screenshot', keywords:['screenshot','screen shot','capture screen','capture my screen'],
+    title:'Taking a screenshot',
+    steps:[
+      'iPhone: press the side button and the volume-up button at the same time, then let go.',
+      'Android phone: press the power button and the volume-down button at the same time.',
+      'Windows computer: press the "PrtScn" key, or press the Windows key + Shift + S to select part of the screen.',
+      'Mac computer: press Command + Shift + 4, then drag to select the area you want.',
+      'The screenshot is usually saved automatically to your Photos or Screenshots folder.'
+    ] },
+
+  { id:'texting', emoji:'💬', label:'Sending a text message', keywords:['text message','send a text','sms','how do i text'],
+    title:'Sending a text message',
+    steps:[
+      'Open the Messages app on your phone.',
+      'Tap the icon to start a new message (often a pencil or a "+" symbol).',
+      'Type the name or phone number of the person you want to message.',
+      'Type your message in the text box at the bottom.',
+      'Tap the arrow or "Send" button to send it.'
+    ] },
+
+  { id:'banking', emoji:'🏦', label:'Online banking safety', keywords:['online banking','bank safety','banking app safe','is banking online safe'],
+    title:'Staying safe with online or mobile banking',
+    steps:[
+      'Only use your bank\'s official app (downloaded from the App Store or Google Play) or type your bank\'s website address directly — never click a link from an email or text.',
+      'Turn on two-factor authentication if your bank offers it — this sends a code to confirm it is really you.',
+      'Never share a one-time code with anyone, even if they say they are from your bank.',
+      'Log out when you are finished, especially on a shared or public computer.',
+      'Check your statements regularly for anything you do not recognize.'
+    ] },
+
+  { id:'privacy', emoji:'🔒', label:'Social media privacy', keywords:['facebook privacy','social media privacy','who can see my posts','privacy settings'],
+    title:'Controlling who can see your posts',
+    steps:[
+      'Open the app (like Facebook) and go to Settings, then look for "Privacy".',
+      'Set who can see your future posts to "Friends" instead of "Public".',
+      'Be cautious about accepting friend requests from people you do not know in person.',
+      'Avoid sharing details like your home address, travel plans, or daily routine publicly.'
+    ] },
+
+  { id:'lostphone', emoji:'📍', label:'Lost my phone', keywords:['lost my phone','find my phone','phone missing','lost phone'],
+    title:'Finding a lost phone',
+    steps:[
+      'On a computer or another device, go to "Find My" (for iPhone) or "Find My Device" (for Android) and sign in with the same account as your phone.',
+      'You should see your phone\'s last known location on a map.',
+      'You can make it play a sound, lock it remotely, or mark it as lost.',
+      'If you believe it was stolen, contact your phone carrier to suspend the line.'
+    ] },
+
+  { id:'battery', emoji:'🔋', label:'Battery draining fast', keywords:['battery','draining fast','dies quickly','battery life'],
+    title:'Battery draining faster than usual',
+    steps:[
+      'Lower your screen brightness — this is one of the biggest battery users.',
+      'Close apps you are not using that may be running in the background.',
+      'Check Settings for "Battery" to see which apps are using the most power.',
+      'Restart your device.',
+      'If your device is several years old, the battery may simply be wearing out — a repair shop can check this.'
+    ] },
+
+  { id:'update', emoji:'⬆️', label:'Software update prompts', keywords:['update','software update','keeps asking to update','should i update'],
+    title:'Handling software update prompts',
+    steps:[
+      'It is generally safe, and a good idea, to install updates — they often fix problems and improve security.',
+      'Plug your device into a charger and connect to Wi-Fi first, since updates can take a while.',
+      'Tap "Update Now" or "Install" when prompted.',
+      'Do not turn off or unplug the device while it is updating.',
+      'The device may restart once or twice during the update — this is normal.'
+    ] }
+];
+
+const QUICK_TOPICS = ['wifi','password','phishing','videocall','textsize','printer','backup','scamcall'];
+
+/* ============ Rendering ============ */
+const chatLog = document.getElementById('chatLog');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function addUserMessage(text){
+  const el = document.createElement('div');
+  el.className = 'msg user';
+  el.innerHTML = `<div class="msg-avatar">🧑</div><div class="bubble">${esc(text)}</div>`;
+  chatLog.appendChild(el);
+  scrollToBottom();
+}
+
+function addBotHTML(html, opts){
+  opts = opts || {};
+  const el = document.createElement('div');
+  el.className = 'msg bot';
+  el.innerHTML = `<div class="msg-avatar">🤖</div><div class="bubble">${html}${opts.ai?'<span class="ai-badge">AI</span>':''}</div>`;
+  chatLog.appendChild(el);
+  scrollToBottom();
+  return el;
+}
+
+function addTyping(){
+  const el = document.createElement('div');
+  el.className = 'msg bot';
+  el.id = 'typingIndicator';
+  el.innerHTML = `<div class="msg-avatar">🤖</div><div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  chatLog.appendChild(el);
+  scrollToBottom();
+}
+function removeTyping(){
+  const t = document.getElementById('typingIndicator');
+  if(t) t.remove();
+}
+
+function scrollToBottom(){ chatLog.scrollTop = chatLog.scrollHeight; }
+
+function renderEntryHTML(entry){
+  const steps = entry.steps.map(s => `<li>${esc(s)}</li>`).join('');
+  return `<h3>${esc(entry.title)}</h3><ol>${steps}</ol>` +
+    (entry.tip ? `<div class="tip">💡 ${esc(entry.tip)}</div>` : '') +
+    (entry.warn ? `<div class="warn">⚠️ ${esc(entry.warn)}</div>` : '');
+}
+
+function welcomeMessage(){
+  addBotHTML(`<h3>Hi, I'm ClearHelp 👋</h3><p>Tell me what's going on with your phone, computer, or the internet, and I'll walk you through it step by step. You can also tap one of the buttons above for a quick answer.</p>`);
+}
+
+function buildTopics(){
+  const grid = document.getElementById('topicGrid');
+  QUICK_TOPICS.forEach(id => {
+    const entry = KB.find(e => e.id === id);
+    if(!entry) return;
+    const btn = document.createElement('div');
+    btn.className = 'topic-btn' + (id === 'scamcall' ? ' scam-btn' : '');
+    btn.innerHTML = `<span class="topic-emoji">${entry.emoji}</span><span>${esc(entry.label)}</span>`;
+    btn.onclick = () => { userInput.value = entry.label; handleSend(); };
+    grid.appendChild(btn);
+  });
+}
+
+/* ============ Matching ============ */
+function findBestMatch(text){
+  const q = text.toLowerCase();
+  let best = null, bestScore = 0;
+  KB.forEach(entry => {
+    let score = 0;
+    entry.keywords.forEach(k => { if(q.includes(k)) score += k.length; });
+    if(score > bestScore){ bestScore = score; best = entry; }
+  });
+  return bestScore > 0 ? best : null;
+}
+
+/* ============ Optional AI fallback ============ */
+async function askAI(question){
+  const key = localStorage.getItem('clearhelp_api_key');
+  if(!key) return null;
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key);
+  const prompt = `You are ClearHelp, a patient tech-support helper for older adults who may not be familiar with technology.
+Answer the question below in very simple plain language, with no jargon.
+Use short numbered steps when giving instructions. Keep it warm, encouraging, and concise.
+If the question describes something that sounds like a scam or phishing attempt, clearly warn them and advise not sharing money or personal information.
+
+Question: "${question}"`;
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }], generationConfig:{ maxOutputTokens: 500, temperature: 0.4 } })
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message || 'AI request failed');
+  const out = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  return out || null;
+}
+
+function fallbackHTML(){
+  const list = QUICK_TOPICS.map(id => {
+    const e = KB.find(x => x.id === id);
+    return `<li>${e.emoji} ${esc(e.label)}</li>`;
+  }).join('');
+  return `<h3>I'm not sure about that one yet</h3>
+    <p>I can help with things like:</p><ul>${list}</ul>
+    <p>Try describing your problem a little differently, or tap one of the quick topics above. You can also connect your own AI key in Settings so I can help with more open-ended questions.</p>`;
+}
+
+/* ============ Send handling ============ */
+async function handleSend(){
+  const text = userInput.value.trim();
+  if(!text) return;
+  addUserMessage(text);
+  userInput.value = '';
+  autoGrow();
+  sendBtn.disabled = true;
+
+  const match = findBestMatch(text);
+  addTyping();
+
+  if(match){
+    setTimeout(() => {
+      removeTyping();
+      addBotHTML(renderEntryHTML(match));
+      sendBtn.disabled = false;
+    }, 350);
+    return;
+  }
+
+  try{
+    const aiAnswer = await askAI(text);
+    removeTyping();
+    if(aiAnswer){
+      addBotHTML(`<p>${esc(aiAnswer).replace(/\n/g,'<br>')}</p>`, { ai:true });
+    } else {
+      addBotHTML(fallbackHTML());
+    }
+  }catch(e){
+    removeTyping();
+    addBotHTML(`<p>Sorry, something went wrong reaching the AI helper (${esc(e.message)}).</p>` + fallbackHTML());
+  }
+  sendBtn.disabled = false;
+}
+
+function clearChat(){
+  chatLog.innerHTML = '';
+  welcomeMessage();
+}
+
+function autoGrow(){
+  userInput.style.height = 'auto';
+  userInput.style.height = Math.min(160, userInput.scrollHeight) + 'px';
+}
+
+userInput.addEventListener('input', autoGrow);
+userInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }
+});
+
+buildTopics();
+welcomeMessage();
+</script>
+</body>
+</html>
