@@ -264,6 +264,21 @@ footer .disclaimer{ margin-bottom:10px; }
 .see-all-row{ text-align:center; margin-top:14px; }
 .see-all-link{ background:none; border:none; color:var(--accent); font-weight:700; font-size:0.95rem; cursor:pointer; font-family:inherit; min-height:44px; padding:0 8px; }
 
+/* ---------- More detail / external resources ---------- */
+.more-help{ margin-top:10px; padding:10px 12px; border-radius:10px; background:#eef2fb; border:1px solid var(--border); }
+.more-help-label{ font-size:0.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+.more-help a{ font-weight:700; text-decoration:none; }
+.more-help a:hover{ text-decoration:underline; }
+.more-help-note{ font-size:0.88rem; color:var(--muted); margin-top:2px; }
+.resource-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; max-height:60vh; overflow-y:auto; }
+.resource-item{
+  display:block; border:2px solid var(--border); border-radius:12px; padding:12px 14px;
+  text-decoration:none; color:var(--text); background:var(--panel);
+}
+.resource-item:hover{ border-color:var(--accent); background:var(--accent-soft); }
+.resource-name{ font-weight:700; font-size:1rem; margin-bottom:3px; }
+.resource-desc{ font-size:0.88rem; color:var(--muted); line-height:1.5; }
+
 /* ---------- Guide library ---------- */
 .library-modal{ max-width:720px; width:100%; max-height:85vh; display:flex; flex-direction:column; padding:20px; }
 .library-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
@@ -377,6 +392,7 @@ footer .disclaimer{ margin-bottom:10px; }
   <p class="disclaimer">ClearHelp gives general step-by-step guidance and is not a substitute for a trusted family member, your device's manufacturer, or professional support — especially for anything involving money or personal information.</p>
   <div class="footer-links">
     <button class="link-btn" onclick="clearChat()">Start a new conversation</button>
+    <button class="link-btn" onclick="openResources()">More technical help</button>
     <button class="link-btn" onclick="openSettings()">Connect your own AI key (optional)</button>
   </div>
 </footer>
@@ -412,6 +428,17 @@ footer .disclaimer{ margin-bottom:10px; }
     <div class="library-body" id="libraryBody">
       <div class="library-list" id="libraryList"></div>
       <div class="library-detail" id="libraryDetail" hidden></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="resourcesModal">
+  <div class="modal">
+    <h3>More technical help</h3>
+    <p>ClearHelp's guides cover common situations in plain language. For trickier problems, or if a family member wants to dig deeper, these free communities offer more detailed, technical help.</p>
+    <div class="resource-list" id="resourceList"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="closeResources()">Close</button>
     </div>
   </div>
 </div>
@@ -548,7 +575,8 @@ const KB = [
       'Check for and install any pending software updates.',
       'Make sure there is free storage space — delete old files or photos you no longer need.',
       'If it is still slow, a trusted family member or repair shop can check for bigger issues.'
-    ] },
+    ],
+    moreHelp:{ source:'tomshardware', note:'For deeper hardware diagnosis, Tom\'s Hardware Forum has an active community of PC experts.' } },
 
   { id:'printer', emoji:'🖨️', label:'Printer not printing', category:'Computers & Devices', keywords:['printer','print','wont print',"won't print",'not printing'],
     title:'Fixing a printer that will not print',
@@ -558,7 +586,8 @@ const KB = [
       'Restart both the printer and your computer.',
       'On your computer, check that the correct printer is selected as the "default printer" in Settings.',
       'Try printing a simple test page to confirm it is working.'
-    ] },
+    ],
+    moreHelp:{ source:'ifixit', note:'If your printer needs an internal repair, iFixit has free, photographed step-by-step guides.' } },
 
   { id:'volume', emoji:'🔊', label:"Can't hear anything", category:'Computers & Devices', keywords:['volume',"can't hear",'cant hear','no sound','sound not working','too quiet'],
     title:'Fixing sound or volume problems',
@@ -577,7 +606,8 @@ const KB = [
       'Make sure it is properly plugged in, or turned on and paired if it is Bluetooth.',
       'Try unplugging it and plugging it into a different port on your computer.',
       'Restart the computer with the mouse or keyboard still connected.'
-    ] },
+    ],
+    moreHelp:{ source:'ifixit', note:'If a mouse or keyboard needs to be opened up, iFixit has repair guides for many models.' } },
 
   { id:'backup', emoji:'🖼️', label:'Backing up photos', category:'Photos & Files', keywords:['backup photos','save photos','lose pictures','photos disappeared','back up my photos'],
     title:'Backing up your photos so you never lose them',
@@ -597,7 +627,8 @@ const KB = [
       'Restart your browser if pop-ups keep appearing.',
       'If a pop-up claims your computer has a virus and gives you a phone number to call, do not call it — this is almost always a scam.'
     ],
-    warn:'A pop-up warning with a phone number to call is a common scam. Real security software never asks you to call a number from a pop-up.' },
+    warn:'A pop-up warning with a phone number to call is a common scam. Real security software never asks you to call a number from a pop-up.',
+    moreHelp:{ source:'bleepingcomputer', note:'If pop-ups keep coming back, Bleeping Computer\'s community can help check for malware.' } },
 
   { id:'virus', emoji:'🛡️', label:'Worried about a virus', category:'Scams & Safety', keywords:['virus','malware','hacked','infected','computer infected'],
     title:'Worried your device has a virus',
@@ -607,7 +638,8 @@ const KB = [
       'If you have antivirus software installed, open it and run a full scan.',
       'Ask a trusted family member or a professional to take a look before you install anything new.',
       'If you shared a password recently, change it from a different, trusted device.'
-    ] },
+    ],
+    moreHelp:{ source:'bleepingcomputer', note:'Bleeping Computer specializes in removing viruses and malware, with real experts helping for free.' } },
 
   { id:'restart', emoji:'🔁', label:'How to restart my device', category:'Computers & Devices', keywords:['restart','reboot','turn off and on','how do i restart'],
     title:'Restarting your phone or computer',
@@ -635,7 +667,8 @@ const KB = [
       'Restart your phone or computer.',
       'Check the app store to see if an update is available for the app, and install it.',
       'If it still does not work, you can delete the app and reinstall it as a last step — your account information is usually saved and will still be there.'
-    ] },
+    ],
+    moreHelp:{ source:'reddit', note:'If reinstalling does not fix it, try posting your exact error on Reddit\'s r/techsupport.' } },
 
   { id:'attachment', emoji:'📎', label:'Sending a photo by email', category:'Staying in Touch', keywords:['attach','attachment','send a photo by email','email a file','email a photo'],
     title:'Attaching a photo or file to an email',
@@ -703,7 +736,8 @@ const KB = [
       'Check Settings for "Battery" to see which apps are using the most power.',
       'Restart your device.',
       'If your device is several years old, the battery may simply be wearing out — a repair shop can check this.'
-    ] },
+    ],
+    moreHelp:{ source:'ifixit', note:'iFixit has step-by-step guides (and the right tools) for replacing a worn-out battery yourself.' } },
 
   { id:'update', emoji:'⬆️', label:'Software update prompts', category:'Apps & Updates', keywords:['update','software update','keeps asking to update','should i update'],
     title:'Handling software update prompts',
@@ -713,7 +747,8 @@ const KB = [
       'Tap "Update Now" or "Install" when prompted.',
       'Do not turn off or unplug the device while it is updating.',
       'The device may restart once or twice during the update — this is normal.'
-    ] },
+    ],
+    moreHelp:{ source:'superuser', note:'For a stubborn update error message, Super User often has the exact technical fix.' } },
 
   { id:'emailsetup', emoji:'📧', label:'Setting up an email account', category:'Accounts & Passwords', keywords:['set up email','add email account','new email address','create an email account'],
     title:'Setting up an email account',
@@ -751,7 +786,8 @@ const KB = [
       'Look for "Privacy" or "History", then find "Clear browsing data" or "Clear history".',
       'Select "Cookies" and "Cached images and files", then confirm.',
       'You may need to sign back in to some websites afterward — that is normal.'
-    ] },
+    ],
+    moreHelp:{ source:'superuser', note:'For deeper browser troubleshooting, Super User has precise, technical answers.' } },
 
   { id:'unsubscribe', emoji:'📭', label:'Stopping unwanted emails', category:'Scams & Safety', keywords:['unsubscribe','too many emails','stop emails','stop getting emails'],
     title:'Stopping unwanted emails',
@@ -806,7 +842,8 @@ const KB = [
       'From the home screen, find and open the app (like Netflix or Hulu) — download it first if it is not already there.',
       'Sign in with your account email and password, or create a new account.',
       'Use your remote to browse and select a show, then press the center button to play.'
-    ] },
+    ],
+    moreHelp:{ source:'tomshardware', note:'For streaming device or smart TV hardware issues, Tom\'s Hardware Forum can help.' } },
 
   { id:'darkmode', emoji:'🌙', label:'Turning on Dark Mode', category:'Accessibility', keywords:['dark mode','night mode','eye strain','screen too bright'],
     title:'Turning on Dark Mode',
@@ -834,7 +871,8 @@ const KB = [
       'Log in, then look for "Wireless" or "Wi-Fi" settings and find the password field.',
       'Type a new password, save the changes, then reconnect your devices using the new password.'
     ],
-    tip:'If this feels tricky, your internet provider\'s support line can often walk you through it or do it for you.' },
+    tip:'If this feels tricky, your internet provider\'s support line can often walk you through it or do it for you.',
+    moreHelp:{ source:'tomshardware', note:'For more advanced router settings, Tom\'s Hardware Forum has knowledgeable volunteers.' } },
 
   { id:'publicwifi', emoji:'🛜', label:'Using public Wi-Fi safely', category:'Scams & Safety', keywords:['public wifi','coffee shop wifi','airport wifi safe','free wifi safe'],
     title:'Using public Wi-Fi safely',
@@ -1003,6 +1041,38 @@ const KB = [
 
 const QUICK_TOPICS = ['wifi','password','phishing','videocall','textsize','printer','backup','scamcall'];
 
+/* ============ External resources ============ */
+const RESOURCES = {
+  ifixit: { name:'🔧 iFixit', url:'https://www.ifixit.com/', desc:'Free, detailed repair guides with photos for taking apart and fixing devices yourself, plus the exact tools if you need them.' },
+  tomshardware: { name:'💻 Tom\'s Hardware Forum', url:'https://forums.tomshardware.com/', desc:'A very active community for diagnosing PC and hardware problems.' },
+  bleepingcomputer: { name:'🛡️ Bleeping Computer', url:'https://www.bleepingcomputer.com/', desc:'A trusted community focused on removing viruses and malware, and general Windows/Mac troubleshooting.' },
+  superuser: { name:'❓ Super User', url:'https://superuser.com/', desc:'A question-and-answer site where experienced users share precise, technical fixes.' },
+  reddit: { name:'👥 Reddit — r/techsupport', url:'https://www.reddit.com/r/techsupport/', desc:'Post your exact problem or error message and get real-time help from other people.' }
+};
+
+function openResources(){
+  const list = document.getElementById('resourceList');
+  list.innerHTML = Object.values(RESOURCES).map(r => `
+    <a class="resource-item" href="${r.url}" target="_blank" rel="noopener noreferrer">
+      <div class="resource-name">${esc(r.name)} ↗</div>
+      <div class="resource-desc">${esc(r.desc)}</div>
+    </a>
+  `).join('');
+  document.getElementById('resourcesModal').classList.add('open');
+}
+function closeResources(){ document.getElementById('resourcesModal').classList.remove('open'); }
+
+function moreHelpHTML(entry){
+  if(!entry.moreHelp) return '';
+  const r = RESOURCES[entry.moreHelp.source];
+  if(!r) return '';
+  return `<div class="more-help">
+    <div class="more-help-label">Want more detail?</div>
+    <a href="${r.url}" target="_blank" rel="noopener noreferrer">${esc(r.name)} ↗</a>
+    <div class="more-help-note">${esc(entry.moreHelp.note)}</div>
+  </div>`;
+}
+
 /* ============ Rendering ============ */
 const chatLog = document.getElementById('chatLog');
 const userInput = document.getElementById('userInput');
@@ -1052,7 +1122,8 @@ function renderEntryHTML(entry){
   const steps = entry.steps.map(s => `<li>${esc(s)}</li>`).join('');
   return `<h3>${esc(entry.title)}</h3><ol>${steps}</ol>` +
     (entry.tip ? `<div class="tip">💡 ${esc(entry.tip)}</div>` : '') +
-    (entry.warn ? `<div class="warn">⚠️ ${esc(entry.warn)}</div>` : '');
+    (entry.warn ? `<div class="warn">⚠️ ${esc(entry.warn)}</div>` : '') +
+    moreHelpHTML(entry);
 }
 
 function entryPlainText(entry){
@@ -1158,7 +1229,15 @@ function fallbackHTML(){
   }).join('');
   return `<h3>I'm not sure about that one yet</h3>
     <p>I can help with things like:</p><ul>${list}</ul>
-    <p>Try describing your problem a little differently, tap one of the quick topics above, or <button class="link-btn" style="font-size:inherit" onclick="openLibrary()">browse all guides</button>. You can also connect your own AI key in Settings so I can help with more open-ended questions.</p>`;
+    <p>Try describing your problem a little differently, tap one of the quick topics above, or <button class="link-btn" style="font-size:inherit" onclick="openLibrary()">browse all guides</button>. You can also connect your own AI key in Settings so I can help with more open-ended questions.</p>
+    <div class="more-help">
+      <div class="more-help-label">For a deeper, more technical answer</div>
+      <a href="${RESOURCES.reddit.url}" target="_blank" rel="noopener noreferrer">${esc(RESOURCES.reddit.name)} ↗</a>
+      <div class="more-help-note">${esc(RESOURCES.reddit.desc)}</div>
+      <a href="${RESOURCES.superuser.url}" target="_blank" rel="noopener noreferrer" style="display:block;margin-top:8px">${esc(RESOURCES.superuser.name)} ↗</a>
+      <div class="more-help-note">${esc(RESOURCES.superuser.desc)}</div>
+      <button class="link-btn" style="font-size:0.85rem;margin-top:6px" onclick="openResources()">See all technical resources</button>
+    </div>`;
 }
 
 /* ============ Guide library ============ */
