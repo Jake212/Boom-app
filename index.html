@@ -198,6 +198,30 @@ a{ color:var(--accent); }
 }
 .send-btn:hover{ background:var(--accent-dark); }
 .send-btn:disabled{ opacity:.5; cursor:not-allowed; }
+.mic-btn{
+  background:var(--panel);
+  color:var(--text);
+  border:2px solid var(--border);
+  border-radius:50%;
+  width:52px; height:52px;
+  min-width:52px;
+  font-size:1.3rem;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.mic-btn:hover{ border-color:var(--accent); color:var(--accent); }
+.mic-btn.listening{ background:#fee2e2; border-color:#ef4444; color:#ef4444; animation:mic-pulse 1.2s ease-in-out infinite; }
+@keyframes mic-pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(239,68,68,.35); } 50%{ box-shadow:0 0 0 8px rgba(239,68,68,0); } }
+.listening-hint{ padding:0 16px 10px; font-size:0.85rem; color:#ef4444; font-weight:700; }
+
+.speak-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  background:none; border:none; cursor:pointer;
+  color:var(--muted); font-size:1rem; margin-left:6px;
+  vertical-align:middle; min-width:32px; min-height:32px; border-radius:8px;
+}
+.speak-btn:hover{ color:var(--accent); background:var(--bg); }
+.speak-btn.speaking{ color:var(--accent); }
 
 /* ---------- Footer / settings ---------- */
 footer{
@@ -323,8 +347,10 @@ footer .disclaimer{ margin-bottom:10px; }
 <div class="chat-wrap">
   <div class="chat-panel">
     <div class="chat-log" id="chatLog"></div>
+    <div class="listening-hint" id="listeningHint" hidden>🎙️ Listening… speak your question now</div>
     <div class="chat-input-row">
       <textarea id="userInput" rows="1" placeholder="Type your question here… e.g. &quot;my internet stopped working&quot;"></textarea>
+      <button class="mic-btn" id="micBtn" onclick="toggleMic()" aria-label="Speak your question" type="button">🎤</button>
       <button class="send-btn" id="sendBtn" onclick="handleSend()">Send ➤</button>
     </div>
   </div>
@@ -792,11 +818,16 @@ function addUserMessage(text){
   scrollToBottom();
 }
 
+let bubbleCounter = 0;
 function addBotHTML(html, opts){
   opts = opts || {};
   const el = document.createElement('div');
   el.className = 'msg bot';
-  el.innerHTML = `<div class="msg-avatar">🤖</div><div class="bubble">${html}${opts.ai?'<span class="ai-badge">AI</span>':''}</div>`;
+  const bubbleId = 'bubble-' + (bubbleCounter++);
+  const speakBtn = SPEECH_SYNTHESIS_SUPPORTED
+    ? `<button class="speak-btn" id="speak-${bubbleId}" onclick="speakBubble('${bubbleId}')" aria-label="Read this message aloud" type="button">🔊</button>`
+    : '';
+  el.innerHTML = `<div class="msg-avatar">🤖</div><div class="bubble" id="${bubbleId}">${html}${opts.ai?'<span class="ai-badge">AI</span>':''}${speakBtn}</div>`;
   chatLog.appendChild(el);
   scrollToBottom();
   return el;
@@ -1011,6 +1042,84 @@ userInput.addEventListener('input', autoGrow);
 userInput.addEventListener('keydown', e => {
   if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }
 });
+
+/* ============ Voice input (speech-to-text) ============ */
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+const micBtn = document.getElementById('micBtn');
+const listeningHint = document.getElementById('listeningHint');
+let recognition = null;
+let isListening = false;
+
+function updateMicUI(listening){
+  isListening = listening;
+  micBtn.classList.toggle('listening', listening);
+  micBtn.setAttribute('aria-label', listening ? 'Stop listening' : 'Speak your question');
+  micBtn.textContent = listening ? '⏹️' : '🎤';
+  listeningHint.hidden = !listening;
+}
+
+function toggleMic(){
+  if(!SpeechRecognitionAPI) return;
+  if(isListening){ recognition && recognition.stop(); return; }
+
+  recognition = new SpeechRecognitionAPI();
+  recognition.lang = 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => updateMicUI(true);
+  recognition.onresult = (e) => {
+    let transcript = '';
+    for(let i = 0; i < e.results.length; i++){ transcript += e.results[i][0].transcript; }
+    userInput.value = transcript;
+    autoGrow();
+  };
+  recognition.onerror = (e) => {
+    updateMicUI(false);
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+      addBotHTML('<p>I don\'t have permission to use your microphone. You can allow microphone access for this page in your browser settings, then try the microphone button again.</p>');
+    } else if(e.error !== 'no-speech' && e.error !== 'aborted'){
+      addBotHTML('<p>Sorry, I had trouble hearing you. You can try the microphone again, or just type your question.</p>');
+    }
+  };
+  recognition.onend = () => { updateMicUI(false); userInput.focus(); };
+  recognition.start();
+}
+
+if(!SpeechRecognitionAPI){
+  micBtn.style.display = 'none';
+}
+
+/* ============ Read aloud (text-to-speech) ============ */
+const SPEECH_SYNTHESIS_SUPPORTED = 'speechSynthesis' in window;
+let speakingBubbleId = null;
+
+function speakBubble(id){
+  if(!SPEECH_SYNTHESIS_SUPPORTED) return;
+  const bubble = document.getElementById(id);
+  if(!bubble) return;
+
+  const wasSpeaking = speakingBubbleId === id;
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.speak-btn.speaking').forEach(b => b.classList.remove('speaking'));
+  speakingBubbleId = null;
+  if(wasSpeaking) return;
+
+  const clone = bubble.cloneNode(true);
+  clone.querySelectorAll('.speak-btn, .ai-badge').forEach(n => n.remove());
+  const text = clone.textContent.trim();
+  if(!text) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.95;
+  const btn = document.getElementById('speak-' + id);
+  speakingBubbleId = id;
+  if(btn) btn.classList.add('speaking');
+  utterance.onend = () => { if(btn) btn.classList.remove('speaking'); speakingBubbleId = null; };
+  utterance.onerror = () => { if(btn) btn.classList.remove('speaking'); speakingBubbleId = null; };
+  window.speechSynthesis.speak(utterance);
+}
 
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('open'); });
