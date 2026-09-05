@@ -233,9 +233,57 @@ footer .disclaimer{ margin-bottom:10px; }
 .btn-primary{ background:var(--accent); border:2px solid var(--accent); color:#fff; }
 .ai-badge{ display:inline-block; margin-left:6px; font-size:0.75rem; background:var(--accent-soft); color:var(--accent); padding:2px 8px; border-radius:8px; font-weight:700; vertical-align:middle; }
 
+.see-all-row{ text-align:center; margin-top:14px; }
+.see-all-link{ background:none; border:none; color:var(--accent); font-weight:700; font-size:0.95rem; cursor:pointer; font-family:inherit; min-height:44px; padding:0 8px; }
+
+/* ---------- Guide library ---------- */
+.library-modal{ max-width:720px; width:100%; max-height:85vh; display:flex; flex-direction:column; padding:20px; }
+.library-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.library-header h3{ font-size:1.3rem; }
+.icon-btn{ background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--muted); min-width:44px; min-height:44px; border-radius:8px; }
+.icon-btn:hover{ background:var(--bg); color:var(--text); }
+#librarySearch{
+  width:100%; padding:12px 14px; border:2px solid var(--border); border-radius:10px;
+  font-size:1rem; margin-bottom:12px; font-family:inherit;
+}
+#librarySearch:focus{ outline:none; border-color:var(--accent); }
+.category-chips{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.cat-chip{
+  border:2px solid var(--border); background:var(--panel); color:var(--muted);
+  border-radius:20px; padding:6px 14px; font-size:0.85rem; font-weight:700; cursor:pointer; min-height:36px;
+}
+.cat-chip.active{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+.library-body{ overflow-y:auto; flex:1; }
+.library-list{ display:flex; flex-direction:column; gap:8px; }
+.library-list[hidden], .library-detail[hidden]{ display:none; }
+.library-item{
+  display:flex; align-items:center; gap:12px;
+  border:2px solid var(--border); border-radius:12px; padding:12px 14px;
+  cursor:pointer; text-align:left; background:var(--panel); width:100%;
+}
+.library-item:hover{ border-color:var(--accent); background:var(--accent-soft); }
+.library-item .li-emoji{ font-size:1.4rem; flex-shrink:0; }
+.library-item .li-text{ flex:1; }
+.library-item .li-label{ font-weight:700; font-size:0.98rem; }
+.library-item .li-cat{ font-size:0.8rem; color:var(--muted); }
+.library-empty{ color:var(--muted); text-align:center; padding:30px 10px; }
+.library-detail{ }
+.back-link{ background:none; border:none; color:var(--accent); font-weight:700; font-size:0.95rem; cursor:pointer; font-family:inherit; margin-bottom:14px; min-height:44px; padding:0; }
+.library-detail-card{ border:1px solid var(--border); border-radius:12px; padding:18px; background:#f4f6fb; }
+.library-detail-card h3{ font-size:1.15rem; margin-bottom:10px; }
+.library-detail-card ol{ margin-left:1.3rem; }
+.library-detail-card li{ margin-bottom:8px; }
+.ask-chat-btn{
+  margin-top:14px; background:var(--accent); color:#fff; border:none; border-radius:10px;
+  padding:10px 18px; font-size:0.95rem; font-weight:700; cursor:pointer; min-height:44px;
+}
+.ask-chat-btn:hover{ background:var(--accent-dark); }
+
 @media(max-width:640px){
   .hero h2{ font-size:1.35rem; }
   .msg .bubble{ max-width:78vw; }
+  .modal-overlay{ padding:0; }
+  .library-modal{ max-width:100%; max-height:100dvh; height:100dvh; border-radius:0; }
 }
 </style>
 </head>
@@ -254,6 +302,7 @@ footer .disclaimer{ margin-bottom:10px; }
       <button class="ctrl-btn" onclick="changeScale(-1)" aria-label="Smaller text">A−</button>
       <button class="ctrl-btn" onclick="changeScale(1)" aria-label="Larger text">A+</button>
     </div>
+    <button class="ctrl-btn" onclick="openLibrary()">📚 Guides</button>
     <button class="ctrl-btn" onclick="openSettings()">⚙️ Settings</button>
   </div>
 </div>
@@ -266,6 +315,9 @@ footer .disclaimer{ margin-bottom:10px; }
 <div class="topics">
   <div class="topics-label">Common questions — just tap one:</div>
   <div class="topic-grid" id="topicGrid"></div>
+  <div class="see-all-row">
+    <button class="see-all-link" onclick="openLibrary()">See all guides →</button>
+  </div>
 </div>
 
 <div class="chat-wrap">
@@ -295,6 +347,21 @@ footer .disclaimer{ margin-bottom:10px; }
       <button class="btn-secondary" onclick="clearApiKey()">Remove key</button>
       <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
       <button class="btn-primary" onclick="saveApiKey()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="libraryModal">
+  <div class="modal library-modal">
+    <div class="library-header">
+      <h3>Browse all guides</h3>
+      <button class="icon-btn" onclick="closeLibrary()" aria-label="Close guide library">✕</button>
+    </div>
+    <input type="text" id="librarySearch" placeholder="Search guides… e.g. &quot;password&quot;" oninput="renderLibraryList()">
+    <div class="category-chips" id="categoryChips"></div>
+    <div class="library-body" id="libraryBody">
+      <div class="library-list" id="libraryList"></div>
+      <div class="library-detail" id="libraryDetail" hidden></div>
     </div>
   </div>
 </div>
@@ -332,7 +399,7 @@ function clearApiKey(){
 
 /* ============ Knowledge base ============ */
 const KB = [
-  { id:'wifi', emoji:'📶', label:'Internet not working', keywords:['wifi','wi-fi','internet','no internet','not connecting','connection','router','offline'],
+  { id:'wifi', emoji:'📶', label:'Internet not working', category:'Internet & Wi-Fi', keywords:['wifi','wi-fi','internet','no internet','not connecting','connection','router','offline'],
     title:"Your Wi-Fi or internet isn't working",
     steps:[
       'Look at your Wi-Fi router (the small box with blinking lights) and make sure it is plugged in and turned on.',
@@ -343,7 +410,7 @@ const KB = [
     ],
     tip:"If nothing works after restarting everything, it may be an outage in your area — call your internet provider's support number." },
 
-  { id:'password', emoji:'🔑', label:'Forgot my password', keywords:['password','forgot','forgotten','locked out','reset password',"can't log in",'cant log in','sign in'],
+  { id:'password', emoji:'🔑', label:'Forgot my password', category:'Accounts & Passwords', keywords:['password','forgot','forgotten','locked out','reset password',"can't log in",'cant log in','sign in'],
     title:'Resetting a forgotten password',
     steps:[
       'On the sign-in screen, look for a link that says "Forgot password?" and click it.',
@@ -353,7 +420,7 @@ const KB = [
       'Choose something you can remember, and write it down somewhere safe if that helps.'
     ] },
 
-  { id:'phishing', emoji:'✉️', label:'A suspicious email', keywords:['suspicious email','phishing','scam email','weird email','strange email','email asking for'],
+  { id:'phishing', emoji:'✉️', label:'A suspicious email', category:'Scams & Safety', keywords:['suspicious email','phishing','scam email','weird email','strange email','email asking for'],
     title:'You received a suspicious email',
     steps:[
       'Do not click any links or open any attachments in the email.',
@@ -364,7 +431,7 @@ const KB = [
     ],
     warn:'If the email is threatening you or creating urgency ("act now or your account will be closed"), that is a major warning sign of a scam.' },
 
-  { id:'scamcall', emoji:'🚨', label:'Is this a scam?', keywords:['scam','robocall','scam call','someone called','suspicious call','gift card','wire money','irs called','social security called'],
+  { id:'scamcall', emoji:'🚨', label:'Is this a scam?', category:'Scams & Safety', keywords:['scam','robocall','scam call','someone called','suspicious call','gift card','wire money','irs called','social security called'],
     title:'Recognizing a phone or online scam',
     steps:[
       'Never give out your passwords, bank details, or one-time codes to someone who called or messaged you.',
@@ -375,7 +442,7 @@ const KB = [
     ],
     warn:"When in doubt, don't send money or information — you can always verify first and it's never too late to say no." },
 
-  { id:'videocall', emoji:'📹', label:'Video calling family', keywords:['video call','zoom','facetime','skype','see my grandkids','video chat'],
+  { id:'videocall', emoji:'📹', label:'Video calling family', category:'Staying in Touch', keywords:['video call','zoom','facetime','skype','see my grandkids','video chat'],
     title:'Making a video call to family',
     steps:[
       'Open the video call app (FaceTime, Zoom, or WhatsApp, for example).',
@@ -385,7 +452,7 @@ const KB = [
       'To end the call, tap the red button, usually at the bottom of the screen.'
     ] },
 
-  { id:'textsize', emoji:'🔍', label:'Make text bigger', keywords:['text too small',"can't read",'cant read','increase text size','font size','zoom in','make it bigger'],
+  { id:'textsize', emoji:'🔍', label:'Make text bigger', category:'Accessibility', keywords:['text too small',"can't read",'cant read','increase text size','font size','zoom in','make it bigger'],
     title:'Making text easier to read',
     steps:[
       'On this page, you can use the "A+" button at the top to make everything bigger right now.',
@@ -394,7 +461,7 @@ const KB = [
       'You can also try pinching outward with two fingers on a touchscreen to zoom in on most apps.'
     ] },
 
-  { id:'slow', emoji:'🐢', label:'Computer running slow', keywords:['slow','running slow','freezing','laggy','frozen'],
+  { id:'slow', emoji:'🐢', label:'Computer running slow', category:'Computers & Devices', keywords:['slow','running slow','freezing','laggy','frozen'],
     title:'Speeding up a slow computer',
     steps:[
       'Restart the computer — this alone often fixes it.',
@@ -404,7 +471,7 @@ const KB = [
       'If it is still slow, a trusted family member or repair shop can check for bigger issues.'
     ] },
 
-  { id:'printer', emoji:'🖨️', label:'Printer not printing', keywords:['printer','print','wont print',"won't print",'not printing'],
+  { id:'printer', emoji:'🖨️', label:'Printer not printing', category:'Computers & Devices', keywords:['printer','print','wont print',"won't print",'not printing'],
     title:'Fixing a printer that will not print',
     steps:[
       'Check that the printer is turned on, has paper, and has ink or toner.',
@@ -414,7 +481,7 @@ const KB = [
       'Try printing a simple test page to confirm it is working.'
     ] },
 
-  { id:'volume', emoji:'🔊', label:"Can't hear anything", keywords:['volume',"can't hear",'cant hear','no sound','sound not working','too quiet'],
+  { id:'volume', emoji:'🔊', label:"Can't hear anything", category:'Computers & Devices', keywords:['volume',"can't hear",'cant hear','no sound','sound not working','too quiet'],
     title:'Fixing sound or volume problems',
     steps:[
       'Check the volume buttons on the side of your device, or the volume slider in Settings, and make sure it is turned up.',
@@ -424,7 +491,7 @@ const KB = [
       'Restart the device if the sound still is not working.'
     ] },
 
-  { id:'mouse', emoji:'🖱️', label:'Mouse or keyboard issues', keywords:['mouse not working','keyboard not working','no cursor','mouse','keyboard'],
+  { id:'mouse', emoji:'🖱️', label:'Mouse or keyboard issues', category:'Computers & Devices', keywords:['mouse not working','keyboard not working','no cursor','mouse','keyboard'],
     title:'Mouse or keyboard not responding',
     steps:[
       'If it is wireless, check that the batteries are not dead and replace them if needed.',
@@ -433,7 +500,7 @@ const KB = [
       'Restart the computer with the mouse or keyboard still connected.'
     ] },
 
-  { id:'backup', emoji:'🖼️', label:'Backing up photos', keywords:['backup photos','save photos','lose pictures','photos disappeared','back up my photos'],
+  { id:'backup', emoji:'🖼️', label:'Backing up photos', category:'Photos & Files', keywords:['backup photos','save photos','lose pictures','photos disappeared','back up my photos'],
     title:'Backing up your photos so you never lose them',
     steps:[
       'Connect your phone to Wi-Fi.',
@@ -443,7 +510,7 @@ const KB = [
       'Afterward, new photos will back up automatically in the background.'
     ] },
 
-  { id:'popups', emoji:'🪟', label:'Annoying pop-ups', keywords:['pop up','pop-up','pop ups','ads','keeps opening windows'],
+  { id:'popups', emoji:'🪟', label:'Annoying pop-ups', category:'Scams & Safety', keywords:['pop up','pop-up','pop ups','ads','keeps opening windows'],
     title:'Stopping pop-up windows and ads',
     steps:[
       'Do not click any buttons inside the pop-up, even ones that say "Close" — close it using the small X in a corner, or close the whole browser tab.',
@@ -453,7 +520,7 @@ const KB = [
     ],
     warn:'A pop-up warning with a phone number to call is a common scam. Real security software never asks you to call a number from a pop-up.' },
 
-  { id:'virus', emoji:'🛡️', label:'Worried about a virus', keywords:['virus','malware','hacked','infected','computer infected'],
+  { id:'virus', emoji:'🛡️', label:'Worried about a virus', category:'Scams & Safety', keywords:['virus','malware','hacked','infected','computer infected'],
     title:'Worried your device has a virus',
     steps:[
       'Try not to panic — many "virus" warnings are actually fake pop-ups designed to scare you.',
@@ -463,7 +530,7 @@ const KB = [
       'If you shared a password recently, change it from a different, trusted device.'
     ] },
 
-  { id:'restart', emoji:'🔁', label:'How to restart my device', keywords:['restart','reboot','turn off and on','how do i restart'],
+  { id:'restart', emoji:'🔁', label:'How to restart my device', category:'Computers & Devices', keywords:['restart','reboot','turn off and on','how do i restart'],
     title:'Restarting your phone or computer',
     steps:[
       'On a computer: click the Start or Apple menu, then choose "Restart".',
@@ -472,7 +539,7 @@ const KB = [
       'Wait about a minute for the device to fully turn back on.'
     ] },
 
-  { id:'bluetooth', emoji:'🎧', label:'Connecting Bluetooth', keywords:['bluetooth','pairing','connect headphones','connect speaker'],
+  { id:'bluetooth', emoji:'🎧', label:'Connecting Bluetooth', category:'Computers & Devices', keywords:['bluetooth','pairing','connect headphones','connect speaker'],
     title:'Pairing a Bluetooth device',
     steps:[
       'Turn on Bluetooth on your phone or computer (in Settings).',
@@ -481,7 +548,7 @@ const KB = [
       'If asked for a code, try "0000" or check the accessory\'s instructions.'
     ] },
 
-  { id:'appcrash', emoji:'📱', label:'An app keeps crashing', keywords:['app crashing','app wont open',"app won't open",'app not working','app freezes'],
+  { id:'appcrash', emoji:'📱', label:'An app keeps crashing', category:'Apps & Updates', keywords:['app crashing','app wont open',"app won't open",'app not working','app freezes'],
     title:'An app that will not open or keeps crashing',
     steps:[
       'Close the app completely and open it again.',
@@ -490,7 +557,7 @@ const KB = [
       'If it still does not work, you can delete the app and reinstall it as a last step — your account information is usually saved and will still be there.'
     ] },
 
-  { id:'attachment', emoji:'📎', label:'Sending a photo by email', keywords:['attach','attachment','send a photo by email','email a file','email a photo'],
+  { id:'attachment', emoji:'📎', label:'Sending a photo by email', category:'Staying in Touch', keywords:['attach','attachment','send a photo by email','email a file','email a photo'],
     title:'Attaching a photo or file to an email',
     steps:[
       'Open your email app and start a new message.',
@@ -500,7 +567,7 @@ const KB = [
       'Finish writing your message and tap Send.'
     ] },
 
-  { id:'screenshot', emoji:'📸', label:'Taking a screenshot', keywords:['screenshot','screen shot','capture screen','capture my screen'],
+  { id:'screenshot', emoji:'📸', label:'Taking a screenshot', category:'Photos & Files', keywords:['screenshot','screen shot','capture screen','capture my screen'],
     title:'Taking a screenshot',
     steps:[
       'iPhone: press the side button and the volume-up button at the same time, then let go.',
@@ -510,7 +577,7 @@ const KB = [
       'The screenshot is usually saved automatically to your Photos or Screenshots folder.'
     ] },
 
-  { id:'texting', emoji:'💬', label:'Sending a text message', keywords:['text message','send a text','sms','how do i text'],
+  { id:'texting', emoji:'💬', label:'Sending a text message', category:'Staying in Touch', keywords:['text message','send a text','sms','how do i text'],
     title:'Sending a text message',
     steps:[
       'Open the Messages app on your phone.',
@@ -520,7 +587,7 @@ const KB = [
       'Tap the arrow or "Send" button to send it.'
     ] },
 
-  { id:'banking', emoji:'🏦', label:'Online banking safety', keywords:['online banking','bank safety','banking app safe','is banking online safe'],
+  { id:'banking', emoji:'🏦', label:'Online banking safety', category:'Money & Shopping', keywords:['online banking','bank safety','banking app safe','is banking online safe'],
     title:'Staying safe with online or mobile banking',
     steps:[
       'Only use your bank\'s official app (downloaded from the App Store or Google Play) or type your bank\'s website address directly — never click a link from an email or text.',
@@ -530,7 +597,7 @@ const KB = [
       'Check your statements regularly for anything you do not recognize.'
     ] },
 
-  { id:'privacy', emoji:'🔒', label:'Social media privacy', keywords:['facebook privacy','social media privacy','who can see my posts','privacy settings'],
+  { id:'privacy', emoji:'🔒', label:'Social media privacy', category:'Scams & Safety', keywords:['facebook privacy','social media privacy','who can see my posts','privacy settings'],
     title:'Controlling who can see your posts',
     steps:[
       'Open the app (like Facebook) and go to Settings, then look for "Privacy".',
@@ -539,7 +606,7 @@ const KB = [
       'Avoid sharing details like your home address, travel plans, or daily routine publicly.'
     ] },
 
-  { id:'lostphone', emoji:'📍', label:'Lost my phone', keywords:['lost my phone','find my phone','phone missing','lost phone'],
+  { id:'lostphone', emoji:'📍', label:'Lost my phone', category:'Computers & Devices', keywords:['lost my phone','find my phone','phone missing','lost phone'],
     title:'Finding a lost phone',
     steps:[
       'On a computer or another device, go to "Find My" (for iPhone) or "Find My Device" (for Android) and sign in with the same account as your phone.',
@@ -548,7 +615,7 @@ const KB = [
       'If you believe it was stolen, contact your phone carrier to suspend the line.'
     ] },
 
-  { id:'battery', emoji:'🔋', label:'Battery draining fast', keywords:['battery','draining fast','dies quickly','battery life'],
+  { id:'battery', emoji:'🔋', label:'Battery draining fast', category:'Computers & Devices', keywords:['battery','draining fast','dies quickly','battery life'],
     title:'Battery draining faster than usual',
     steps:[
       'Lower your screen brightness — this is one of the biggest battery users.',
@@ -558,7 +625,7 @@ const KB = [
       'If your device is several years old, the battery may simply be wearing out — a repair shop can check this.'
     ] },
 
-  { id:'update', emoji:'⬆️', label:'Software update prompts', keywords:['update','software update','keeps asking to update','should i update'],
+  { id:'update', emoji:'⬆️', label:'Software update prompts', category:'Apps & Updates', keywords:['update','software update','keeps asking to update','should i update'],
     title:'Handling software update prompts',
     steps:[
       'It is generally safe, and a good idea, to install updates — they often fix problems and improve security.',
@@ -566,6 +633,145 @@ const KB = [
       'Tap "Update Now" or "Install" when prompted.',
       'Do not turn off or unplug the device while it is updating.',
       'The device may restart once or twice during the update — this is normal.'
+    ] },
+
+  { id:'emailsetup', emoji:'📧', label:'Setting up an email account', category:'Accounts & Passwords', keywords:['set up email','add email account','new email address','create an email account'],
+    title:'Setting up an email account',
+    steps:[
+      'Decide on an email provider — Gmail, Outlook, and Yahoo are all free and popular choices.',
+      'Open the Mail app on your phone or computer, or visit the provider\'s website (like gmail.com).',
+      'Tap or click "Add account" or "Create account".',
+      'Follow the prompts to enter your name, choose an email address, and create a password.',
+      'Once created, you can start sending and receiving emails right away.'
+    ] },
+
+  { id:'twofactor', emoji:'🔐', label:'Verification codes (2FA)', category:'Scams & Safety', keywords:['two factor','2fa','verification code','authentication code','security code text'],
+    title:'Understanding two-factor authentication (2FA)',
+    steps:[
+      'Two-factor authentication adds a second check when you log in — usually a code sent to your phone by text or an app.',
+      'After entering your password, you will be asked to enter that code to prove it is really you.',
+      'This makes it much harder for someone else to get into your account, even if they know your password.',
+      'Turn it on in your account\'s Settings, usually under "Security" or "Login".'
+    ],
+    warn:'Never share a verification code with anyone who calls or messages you asking for it — real companies never ask for this code.' },
+
+  { id:'qrcode', emoji:'🔳', label:'Scanning a QR code', category:'Everyday Basics', keywords:['qr code','scan code','scan a code'],
+    title:'Scanning a QR code',
+    steps:[
+      'Open your phone\'s Camera app — you usually do not need a separate app.',
+      'Point the camera at the square, dotted code and hold steady for a second.',
+      'A banner or link will pop up on your screen — tap it to open.',
+      'Only scan codes from sources you trust — do not scan random codes from strangers, flyers, or unexpected mail.'
+    ] },
+
+  { id:'clearcache', emoji:'🧹', label:"Browser acting up", category:'Internet & Wi-Fi', keywords:['clear cache','clear history','clear cookies','browser acting up','browser glitchy'],
+    title:'Clearing your browser\'s cache and history',
+    steps:[
+      'Open your web browser (like Chrome or Safari) and go to its Settings or menu (often three dots or lines in a corner).',
+      'Look for "Privacy" or "History", then find "Clear browsing data" or "Clear history".',
+      'Select "Cookies" and "Cached images and files", then confirm.',
+      'You may need to sign back in to some websites afterward — that is normal.'
+    ] },
+
+  { id:'unsubscribe', emoji:'📭', label:'Stopping unwanted emails', category:'Scams & Safety', keywords:['unsubscribe','too many emails','stop emails','stop getting emails'],
+    title:'Stopping unwanted emails',
+    steps:[
+      'If it is from a company you recognize and trust, scroll to the very bottom of the email and look for a small "Unsubscribe" link.',
+      'Click it and follow the short instructions to stop future emails.',
+      'If the email looks suspicious or you do not recognize the sender, do not click "unsubscribe" — instead mark it as Spam/Junk.'
+    ],
+    warn:'For emails you do not trust, use "Mark as spam" instead of "Unsubscribe" — clicking links in a scam email can confirm your address is active.' },
+
+  { id:'cloudstorage', emoji:'☁️', label:'Understanding cloud storage', category:'Photos & Files', keywords:['cloud storage','google drive','icloud storage','storage full','out of storage'],
+    title:'Understanding cloud storage',
+    steps:[
+      'Cloud storage (like Google Drive, iCloud, or OneDrive) keeps a copy of your photos and files on the internet, not just on your device.',
+      'If your device says "storage full", open the cloud app and check how much space you are using in Settings.',
+      'You can free up space on your device once files are safely backed up to the cloud.',
+      'Most services give some storage for free and let you pay a small monthly fee for more.'
+    ] },
+
+  { id:'telehealth', emoji:'🩺', label:"Video doctor visits", category:'Everyday Basics', keywords:['telehealth','video doctor','doctor video call','virtual appointment'],
+    title:'Joining a video doctor\'s appointment (telehealth)',
+    steps:[
+      'Check your email or text messages for a link from your doctor\'s office, usually sent shortly before the appointment.',
+      'A few minutes before your appointment time, tap the link.',
+      'If asked, allow the app to use your camera and microphone.',
+      'You may be placed in a "waiting room" until the doctor joins — this is normal.'
+    ] },
+
+  { id:'rideshare', emoji:'🚗', label:'Booking a ride (Uber/Lyft)', category:'Everyday Basics', keywords:['uber','lyft','rideshare','book a ride','order a car'],
+    title:'Booking a ride with an app like Uber or Lyft',
+    steps:[
+      'Open the app and make sure your current location is correct.',
+      'Type in where you want to go in the "Where to?" box.',
+      'Choose a ride option and tap "Confirm" or "Request".',
+      'You will see the driver\'s name, photo, car, and license plate — check these match when the car arrives.',
+      'You can track the driver\'s location on the map while you wait.'
+    ] },
+
+  { id:'digitalwallet', emoji:'💳', label:'Using Apple Pay / Google Pay', category:'Money & Shopping', keywords:['apple pay','google pay','digital wallet','tap to pay','contactless pay'],
+    title:'Using a digital wallet to pay',
+    steps:[
+      'Open the Wallet app and add your debit or credit card by taking a photo of it or entering the numbers.',
+      'At checkout, hold your phone near the payment machine\'s symbol until you feel a buzz or hear a beep.',
+      'You may need to use your fingerprint, face, or passcode to confirm.',
+      'Your actual card number is never shared with the store — this makes it quite safe.'
+    ] },
+
+  { id:'streaming', emoji:'📺', label:'Setting up streaming on your TV', category:'Computers & Devices', keywords:['netflix','streaming','smart tv','hulu','disney plus','streaming stick'],
+    title:'Setting up a streaming app on your TV',
+    steps:[
+      'Make sure your TV or streaming stick is connected to your home Wi-Fi.',
+      'From the home screen, find and open the app (like Netflix or Hulu) — download it first if it is not already there.',
+      'Sign in with your account email and password, or create a new account.',
+      'Use your remote to browse and select a show, then press the center button to play.'
+    ] },
+
+  { id:'darkmode', emoji:'🌙', label:'Turning on Dark Mode', category:'Accessibility', keywords:['dark mode','night mode','eye strain','screen too bright'],
+    title:'Turning on Dark Mode',
+    steps:[
+      'Dark Mode changes bright white screens to a darker background, which some people find easier on the eyes, especially at night.',
+      'On a phone: open Settings, then Display & Brightness, and switch "Dark" or "Dark Mode" on.',
+      'On a computer: open Settings, then Display or Personalization, and choose the "Dark" theme.',
+      'You can switch back to "Light" the same way, any time.'
+    ] },
+
+  { id:'closeapp', emoji:'❌', label:'Fully closing an app', category:'Apps & Updates', keywords:['close app','quit app','force close','app running in background',"app wont close"],
+    title:'Fully closing an app',
+    steps:[
+      'On an iPhone: swipe up from the bottom and pause, then swipe up on the app\'s preview to close it.',
+      'On an Android phone: tap the square or swipe-up button to see open apps, then swipe the app away.',
+      'On a computer: click the X in the corner of the window, or right-click its icon and choose "Close" or "Quit".',
+      'You do not need to close apps often — most phones manage this well on their own.'
+    ] },
+
+  { id:'wifipassword', emoji:'📡', label:'Changing your Wi-Fi password', category:'Internet & Wi-Fi', keywords:['change wifi password','router password','wifi password'],
+    title:'Changing your Wi-Fi password',
+    steps:[
+      'Look at the bottom or back of your router for a sticker with a web address (often 192.168.1.1) and default login.',
+      'Type that address into a web browser on a computer connected to the same Wi-Fi.',
+      'Log in, then look for "Wireless" or "Wi-Fi" settings and find the password field.',
+      'Type a new password, save the changes, then reconnect your devices using the new password.'
+    ],
+    tip:'If this feels tricky, your internet provider\'s support line can often walk you through it or do it for you.' },
+
+  { id:'publicwifi', emoji:'🛜', label:'Using public Wi-Fi safely', category:'Scams & Safety', keywords:['public wifi','coffee shop wifi','airport wifi safe','free wifi safe'],
+    title:'Using public Wi-Fi safely',
+    steps:[
+      'Avoid logging into your bank or entering passwords while connected to free public Wi-Fi when possible.',
+      'Confirm the network name with staff before connecting — scammers sometimes create fake networks with similar names.',
+      'If you must do something sensitive, consider using your phone\'s cellular data instead of public Wi-Fi.',
+      'Turn Wi-Fi off when you are done, so your device does not automatically reconnect later.'
+    ] },
+
+  { id:'maps', emoji:'🗺️', label:'Getting directions', category:'Everyday Basics', keywords:['maps','gps','directions','get directions','navigate'],
+    title:'Getting directions with a maps app',
+    steps:[
+      'Open a maps app (like Google Maps or Apple Maps).',
+      'Tap the search bar and type in the address or place you want to go.',
+      'Tap "Directions", choose how you are traveling (car, walking, etc.), then tap "Start" or "Go".',
+      'Follow the spoken directions — the app will tell you when and where to turn.'
     ] }
 ];
 
@@ -676,7 +882,83 @@ function fallbackHTML(){
   }).join('');
   return `<h3>I'm not sure about that one yet</h3>
     <p>I can help with things like:</p><ul>${list}</ul>
-    <p>Try describing your problem a little differently, or tap one of the quick topics above. You can also connect your own AI key in Settings so I can help with more open-ended questions.</p>`;
+    <p>Try describing your problem a little differently, tap one of the quick topics above, or <button class="link-btn" style="font-size:inherit" onclick="openLibrary()">browse all guides</button>. You can also connect your own AI key in Settings so I can help with more open-ended questions.</p>`;
+}
+
+/* ============ Guide library ============ */
+const CATEGORIES = [...new Set(KB.map(e => e.category))];
+let libraryCategory = 'All';
+
+function openLibrary(){
+  libraryCategory = 'All';
+  document.getElementById('librarySearch').value = '';
+  renderCategoryChips();
+  showLibraryList();
+  document.getElementById('libraryModal').classList.add('open');
+}
+function closeLibrary(){ document.getElementById('libraryModal').classList.remove('open'); }
+
+function renderCategoryChips(){
+  const wrap = document.getElementById('categoryChips');
+  const cats = ['All', ...CATEGORIES];
+  wrap.innerHTML = '';
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-chip' + (cat === libraryCategory ? ' active' : '');
+    btn.textContent = cat;
+    btn.onclick = () => { libraryCategory = cat; renderCategoryChips(); renderLibraryList(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function renderLibraryList(){
+  const q = document.getElementById('librarySearch').value.trim().toLowerCase();
+  const list = document.getElementById('libraryList');
+  const matches = KB.filter(e => {
+    if(libraryCategory !== 'All' && e.category !== libraryCategory) return false;
+    if(!q) return true;
+    return e.label.toLowerCase().includes(q) ||
+           e.title.toLowerCase().includes(q) ||
+           e.keywords.some(k => k.includes(q));
+  });
+  if(matches.length === 0){
+    list.innerHTML = `<div class="library-empty">No guides match that search. Try a different word, or clear the search box.</div>`;
+    return;
+  }
+  list.innerHTML = matches.map(e => `
+    <button class="library-item" onclick="showLibraryDetail('${e.id}')">
+      <span class="li-emoji">${e.emoji}</span>
+      <span class="li-text"><div class="li-label">${esc(e.label)}</div><div class="li-cat">${esc(e.category)}</div></span>
+    </button>
+  `).join('');
+}
+
+function showLibraryList(){
+  document.getElementById('libraryList').hidden = false;
+  document.getElementById('libraryDetail').hidden = true;
+  renderLibraryList();
+}
+
+function showLibraryDetail(id){
+  const entry = KB.find(e => e.id === id);
+  if(!entry) return;
+  document.getElementById('libraryList').hidden = true;
+  const detail = document.getElementById('libraryDetail');
+  detail.hidden = false;
+  detail.innerHTML = `
+    <button class="back-link" onclick="showLibraryList()">← Back to all guides</button>
+    <div class="library-detail-card">${renderEntryHTML(entry)}
+      <button class="ask-chat-btn" onclick="askInChat('${entry.id}')">Ask about this in chat</button>
+    </div>
+  `;
+}
+
+function askInChat(id){
+  const entry = KB.find(e => e.id === id);
+  if(!entry) return;
+  closeLibrary();
+  userInput.value = entry.label;
+  handleSend();
 }
 
 /* ============ Send handling ============ */
@@ -728,6 +1010,13 @@ function autoGrow(){
 userInput.addEventListener('input', autoGrow);
 userInput.addEventListener('keydown', e => {
   if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }
+});
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('open'); });
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(o => o.classList.remove('open'));
 });
 
 buildTopics();
