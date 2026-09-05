@@ -251,6 +251,10 @@ footer .disclaimer{ margin-bottom:10px; }
   width:100%; padding:12px 14px; border:2px solid var(--border); border-radius:10px;
   font-size:1rem; margin-bottom:14px; font-family:inherit;
 }
+.key-status{ font-size:0.9rem; margin:-4px 0 14px; padding:8px 10px; border-radius:8px; }
+.key-status.checking{ color:var(--muted); }
+.key-status.ok{ color:var(--good); background:#eafaf0; }
+.key-status.error{ color:var(--warn); background:var(--warn-bg); }
 .modal-actions{ display:flex; gap:10px; justify-content:flex-end; }
 .modal-actions button{ min-height:44px; border-radius:10px; padding:0 18px; font-size:0.95rem; font-weight:700; cursor:pointer; }
 .btn-secondary{ background:var(--bg); border:2px solid var(--border); color:var(--text); }
@@ -369,10 +373,11 @@ footer .disclaimer{ margin-bottom:10px; }
     <h3>Smarter answers (optional)</h3>
     <p>ClearHelp already answers common questions on its own. If you'd like it to also handle questions outside that list, you can add your own free Google Gemini API key. It is saved only in this browser, never sent anywhere else, and never stored in this app's code.</p>
     <input type="password" id="apiKeyInput" placeholder="Paste your Gemini API key here" autocomplete="off">
+    <div class="key-status" id="apiKeyStatus" hidden></div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="clearApiKey()">Remove key</button>
       <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
-      <button class="btn-primary" onclick="saveApiKey()">Save</button>
+      <button class="btn-primary" id="saveKeyBtn" onclick="saveApiKey()">Save &amp; test</button>
     </div>
   </div>
 </div>
@@ -410,17 +415,46 @@ applyScale();
 /* ============ Settings modal / optional API key ============ */
 function openSettings(){
   document.getElementById('apiKeyInput').value = localStorage.getItem('clearhelp_api_key') || '';
+  setKeyStatus(null);
   document.getElementById('settingsModal').classList.add('open');
 }
 function closeSettings(){ document.getElementById('settingsModal').classList.remove('open'); }
-function saveApiKey(){
-  const v = document.getElementById('apiKeyInput').value.trim();
-  if(v) localStorage.setItem('clearhelp_api_key', v);
-  closeSettings();
+
+function setKeyStatus(kind, text){
+  const el = document.getElementById('apiKeyStatus');
+  if(!kind){ el.hidden = true; el.className = 'key-status'; return; }
+  el.hidden = false;
+  el.className = 'key-status ' + kind;
+  el.textContent = text;
 }
+
+async function saveApiKey(){
+  const v = document.getElementById('apiKeyInput').value.trim();
+  if(!v){
+    localStorage.removeItem('clearhelp_api_key');
+    setKeyStatus(null);
+    closeSettings();
+    return;
+  }
+  const btn = document.getElementById('saveKeyBtn');
+  btn.disabled = true;
+  setKeyStatus('checking', 'Checking your key…');
+  try{
+    await testApiKey(v);
+    localStorage.setItem('clearhelp_api_key', v);
+    setKeyStatus('ok', '✓ Connected. I can now help with questions beyond my built-in guides.');
+    setTimeout(closeSettings, 900);
+  }catch(e){
+    setKeyStatus('error', '✗ ' + e.message);
+  }
+  btn.disabled = false;
+}
+
 function clearApiKey(){
   localStorage.removeItem('clearhelp_api_key');
   document.getElementById('apiKeyInput').value = '';
+  aiHistory = [];
+  setKeyStatus(null);
 }
 
 /* ============ Knowledge base ============ */
@@ -1002,6 +1036,11 @@ function renderEntryHTML(entry){
     (entry.warn ? `<div class="warn">⚠️ ${esc(entry.warn)}</div>` : '');
 }
 
+function entryPlainText(entry){
+  const steps = entry.steps.map((s, i) => `${i + 1}. ${s}`).join('\n');
+  return `${entry.title}\n${steps}` + (entry.tip ? `\nTip: ${entry.tip}` : '') + (entry.warn ? `\nWarning: ${entry.warn}` : '');
+}
+
 function welcomeMessage(){
   addBotHTML(`<h3>Hi, I'm ClearHelp 👋</h3><p>Tell me what's going on with your phone, computer, or the internet, and I'll walk you through it step by step. You can also tap one of the buttons above for a quick answer.</p>`);
 }
@@ -1032,25 +1071,65 @@ function findBestMatch(text){
 }
 
 /* ============ Optional AI fallback ============ */
+const AI_MODEL = 'gemini-2.0-flash';
+const AI_SYSTEM_PROMPT = `You are ClearHelp, a patient tech-support helper for older adults who may not be familiar with technology.
+Answer in very simple plain language, with no jargon. Use short numbered steps when giving instructions.
+Keep replies warm, encouraging, and concise. Use the earlier turns of this conversation as context for follow-up questions.
+If a question describes something that sounds like a scam or phishing attempt, clearly warn the user and advise against sharing money or personal information.`;
+const AI_HISTORY_LIMIT = 16;
+let aiHistory = [];
+
+function geminiUrl(key){
+  return `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${encodeURIComponent(key)}`;
+}
+
+function friendlyGeminiError(error, status){
+  const msg = (error && error.message) || '';
+  if(status === 400 && /API key not valid/i.test(msg)) return "That doesn't look like a valid API key. Double-check you copied the whole thing from Google AI Studio.";
+  if(status === 403) return "This key doesn't have permission to use this AI model. Check that it's a Gemini API key, not a different Google service.";
+  if(status === 429 || /quota/i.test(msg)) return "This key has run out of free usage for now. Try again later, or check your quota at Google AI Studio.";
+  if(status === 404) return "The AI model this app expects isn't available for this key right now.";
+  return msg || 'Something went wrong talking to the AI service.';
+}
+
+async function callGemini(key, contents){
+  let res, data;
+  try{
+    res = await fetch(geminiUrl(key), {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        systemInstruction:{ parts:[{ text: AI_SYSTEM_PROMPT }] },
+        contents,
+        generationConfig:{ maxOutputTokens: 500, temperature: 0.4 }
+      })
+    });
+  }catch(e){
+    throw new Error("Couldn't reach the AI service — check your internet connection and try again.");
+  }
+  try{ data = await res.json(); }
+  catch(e){ throw new Error('The AI service sent back something unexpected. Please try again.'); }
+  if(data.error) throw new Error(friendlyGeminiError(data.error, res.status));
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+}
+
+async function testApiKey(key){
+  await callGemini(key, [{ role:'user', parts:[{ text:'Reply with just the word OK.' }] }]);
+}
+
+function rememberTurn(userText, replyText){
+  aiHistory.push({ role:'user', parts:[{ text: userText }] });
+  aiHistory.push({ role:'model', parts:[{ text: replyText }] });
+  if(aiHistory.length > AI_HISTORY_LIMIT) aiHistory = aiHistory.slice(-AI_HISTORY_LIMIT);
+}
+
 async function askAI(question){
   const key = localStorage.getItem('clearhelp_api_key');
   if(!key) return null;
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key);
-  const prompt = `You are ClearHelp, a patient tech-support helper for older adults who may not be familiar with technology.
-Answer the question below in very simple plain language, with no jargon.
-Use short numbered steps when giving instructions. Keep it warm, encouraging, and concise.
-If the question describes something that sounds like a scam or phishing attempt, clearly warn them and advise not sharing money or personal information.
-
-Question: "${question}"`;
-  const res = await fetch(url, {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }], generationConfig:{ maxOutputTokens: 500, temperature: 0.4 } })
-  });
-  const data = await res.json();
-  if(data.error) throw new Error(data.error.message || 'AI request failed');
-  const out = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-  return out || null;
+  const contents = [...aiHistory, { role:'user', parts:[{ text: question }] }];
+  const out = await callGemini(key, contents);
+  if(out) rememberTurn(question, out);
+  return out;
 }
 
 function fallbackHTML(){
@@ -1155,6 +1234,7 @@ async function handleSend(){
     setTimeout(() => {
       removeTyping();
       addBotHTML(renderEntryHTML(match));
+      rememberTurn(text, entryPlainText(match));
       sendBtn.disabled = false;
     }, 350);
     return;
@@ -1170,13 +1250,14 @@ async function handleSend(){
     }
   }catch(e){
     removeTyping();
-    addBotHTML(`<p>Sorry, something went wrong reaching the AI helper (${esc(e.message)}).</p>` + fallbackHTML());
+    addBotHTML(`<p>⚠️ ${esc(e.message)}</p>` + fallbackHTML());
   }
   sendBtn.disabled = false;
 }
 
 function clearChat(){
   chatLog.innerHTML = '';
+  aiHistory = [];
   welcomeMessage();
 }
 
