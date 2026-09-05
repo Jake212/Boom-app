@@ -354,6 +354,12 @@ footer .disclaimer{ margin-bottom:10px; }
 .library-item .li-label{ font-weight:700; font-size:0.98rem; }
 .library-item .li-cat{ font-size:0.8rem; color:var(--muted); }
 .library-empty{ color:var(--muted); text-align:center; padding:30px 10px; }
+.ai-search-btn{
+  margin-top:14px; background:var(--accent); color:#fff; border:none; border-radius:10px;
+  padding:10px 20px; font-size:0.95rem; font-weight:700; cursor:pointer; min-height:44px;
+}
+.ai-search-btn:hover{ background:var(--accent-dark); }
+.ai-search-hint{ margin-top:12px; font-size:0.85rem; color:var(--muted); }
 .library-detail{ }
 .back-link{ background:none; border:none; color:var(--accent); font-weight:700; font-size:0.95rem; cursor:pointer; font-family:inherit; margin-bottom:14px; min-height:44px; padding:0; }
 .library-detail-card{ border:1px solid var(--border); border-radius:12px; padding:18px; background:#f4f6fb; }
@@ -1476,15 +1482,72 @@ function renderLibraryList(){
   }
 
   if(matches.length === 0){
-    list.innerHTML = `<div class="library-empty">No guides match that search. Try a different word, or <button class="link-btn" style="font-size:inherit" onclick="clearLibrarySearch()">clear the search box</button>.</div>`;
+    if(q){
+      const hasKey = !!localStorage.getItem('clearhelp_api_key');
+      list.innerHTML = `<div class="library-empty">
+        No guides match that search. Try a different word, or <button class="link-btn" style="font-size:inherit" onclick="clearLibrarySearch()">clear the search box</button>.
+        ${hasKey
+          ? `<div><button class="ai-search-btn" onclick="runAISearch()">🤖 Search with AI</button></div>`
+          : `<div class="ai-search-hint">Connect an AI key in Settings to search using AI when the exact words don't match.</div>`}
+      </div>`;
+    } else {
+      list.innerHTML = `<div class="library-empty">No guides match that search. Try a different word, or <button class="link-btn" style="font-size:inherit" onclick="clearLibrarySearch()">clear the search box</button>.</div>`;
+    }
     return;
   }
-  list.innerHTML = matches.map(e => `
-    <button class="library-item" onclick="showLibraryDetail('${e.id}')">
-      <span class="li-emoji">${e.emoji}</span>
-      <span class="li-text"><div class="li-label">${esc(e.label)}</div><div class="li-cat">${esc(e.category)}</div></span>
+  list.innerHTML = matches.map(e => renderLibraryItem(e)).join('');
+}
+
+function renderLibraryItem(entry, opts){
+  opts = opts || {};
+  return `
+    <button class="library-item" onclick="showLibraryDetail('${entry.id}')">
+      <span class="li-emoji">${entry.emoji}</span>
+      <span class="li-text"><div class="li-label">${esc(entry.label)}${opts.ai ? '<span class="ai-badge">AI</span>' : ''}</div><div class="li-cat">${esc(entry.category)}</div></span>
     </button>
-  `).join('');
+  `;
+}
+
+async function aiFindGuides(query, key){
+  const catalog = KB.map(e => `${e.id}: ${e.label} — ${e.title} (${e.category})`).join('\n');
+  const prompt = `Here is a catalog of help guides, one per line as "id: label — title (category)":
+${catalog}
+
+A user searched a help-guide library for: "${query}"
+
+Return ONLY a JSON array (no other text, no markdown fences) of up to 6 ids from the catalog above that best match what the user is looking for, ordered most relevant first. Only include genuinely relevant matches — if none are relevant, return [].`;
+  const out = await callGemini(key, [{ role:'user', parts:[{ text: prompt }] }]);
+  if(!out) return [];
+  let ids;
+  try{ ids = JSON.parse(out.replace(/```json|```/g, '').trim()); }
+  catch(e){ return []; }
+  if(!Array.isArray(ids)) return [];
+  const validIds = new Set(KB.map(e => e.id));
+  return ids.filter(id => validIds.has(id)).slice(0, 6);
+}
+
+async function runAISearch(){
+  const rawQuery = document.getElementById('librarySearch').value.trim();
+  const key = localStorage.getItem('clearhelp_api_key');
+  if(!rawQuery || !key) return;
+
+  const list = document.getElementById('libraryList');
+  list.innerHTML = `<div class="library-empty">🤖 Asking AI to find the best match…</div>`;
+
+  const countEl = document.getElementById('resultsCount');
+  try{
+    const ids = await aiFindGuides(rawQuery, key);
+    const matches = ids.map(id => KB.find(e => e.id === id)).filter(Boolean);
+    if(matches.length === 0){
+      countEl.textContent = `AI could not find a match for "${rawQuery}"`;
+      list.innerHTML = `<div class="library-empty">AI could not find a matching guide either. Try browsing by category above, or ask in the chat instead.</div>`;
+      return;
+    }
+    countEl.textContent = `${matches.length} AI-suggested guide${matches.length === 1 ? '' : 's'} for "${rawQuery}"`;
+    list.innerHTML = matches.map(e => renderLibraryItem(e, { ai:true })).join('');
+  }catch(e){
+    list.innerHTML = `<div class="library-empty">⚠️ ${esc(e.message)}</div>`;
+  }
 }
 
 function showLibraryList(){
