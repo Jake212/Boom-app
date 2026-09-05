@@ -2,7 +2,7 @@
 
 An easy-to-use tech-troubleshooting hub for older adults, with AI assistance built in. One place to ask a question in plain English, browse step-by-step guides, or reach trusted expert communities for trickier problems — large text, high contrast, no jargon.
 
-Open `index.html` in a browser to use it. The homepage offers three clear paths — **Ask a question**, **Browse all guides**, and **Expert-level help** — plus quick-tap shortcuts for the most common problems. It answers 54 common questions (Wi-Fi, passwords, scams, video calls, printers, backups, health portals, bill pay, and more, across 12 categories) instantly with no setup required, using a built-in knowledge base. Tap "📚 Guides" to search or browse the full library directly.
+Open `index.html` in a browser to use it. The homepage offers three clear paths — **Ask a question**, **Browse all guides**, and **Expert-level help** — plus quick-tap shortcuts for the most common problems. It answers 54 common questions (Wi-Fi, passwords, scams, video calls, printers, backups, health portals, bill pay, and more, across 12 categories) instantly with no setup required, using a built-in knowledge base. Each guide breaks the fix into small, numbered steps with concrete visual landmarks ("look for a paperclip icon", "usually in a top corner") rather than compressed multi-part instructions, so each step is one simple action. Tap "📚 Guides" to search or browse the full library directly.
 
 You can also tap the microphone button to ask a question by voice instead of typing, and tap the 🔊 icon on any reply to have it read aloud — both use your browser's built-in speech features, with no data sent anywhere.
 
