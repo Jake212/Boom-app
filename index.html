@@ -565,9 +565,10 @@ const KB = [
       'Wait about a minute for the device to fully turn back on.'
     ] },
 
-  { id:'bluetooth', emoji:'🎧', label:'Connecting Bluetooth', category:'Computers & Devices', keywords:['bluetooth','pairing','connect headphones','connect speaker'],
+  { id:'bluetooth', emoji:'🎧', label:'Connecting Bluetooth', category:'Computers & Devices', keywords:['bluetooth','pairing','connect headphones','connect speaker','connect headphones to wifi','headphones not connecting','headphones wont pair','headphones','headphones to wifi'],
     title:'Pairing a Bluetooth device',
     steps:[
+      'Headphones and speakers usually connect over "Bluetooth", not Wi-Fi — it is a common mix-up since both are wireless, but they work differently and use separate settings.',
       'Turn on Bluetooth on your phone or computer (in Settings).',
       'Put your headphones or speaker into "pairing mode" — usually by holding its power button until a light blinks.',
       'On your device, look under Bluetooth settings for the accessory\'s name in the list, then tap it to connect.',
@@ -717,7 +718,7 @@ const KB = [
       'Most services give some storage for free and let you pay a small monthly fee for more.'
     ] },
 
-  { id:'telehealth', emoji:'🩺', label:"Video doctor visits", category:'Everyday Basics', keywords:['telehealth','video doctor','doctor video call','virtual appointment'],
+  { id:'telehealth', emoji:'🩺', label:"Video doctor visits", category:'Health & Assistive Tech', keywords:['telehealth','video doctor','doctor video call','virtual appointment'],
     title:'Joining a video doctor\'s appointment (telehealth)',
     steps:[
       'Check your email or text messages for a link from your doctor\'s office, usually sent shortly before the appointment.',
@@ -798,6 +799,152 @@ const KB = [
       'Tap the search bar and type in the address or place you want to go.',
       'Tap "Directions", choose how you are traveling (car, walking, etc.), then tap "Start" or "Go".',
       'Follow the spoken directions — the app will tell you when and where to turn.'
+    ] },
+
+  { id:'emaildelay', emoji:'⏳', label:'Emails are slow to arrive', category:'Internet & Wi-Fi', keywords:['email slow','emails not arriving','delayed email','email taking long','email not sending','stuck sending','taking forever','slow to arrive','slow to send'],
+    title:'Emails are slow to send or arrive',
+    steps:[
+      'Check that your device is connected to Wi-Fi or has a strong signal — email needs an internet connection to send and receive.',
+      'Close and reopen the Mail app, or refresh the inbox by pulling down on the screen.',
+      'Check that you are not out of storage space in your email account — a full inbox can stop new mail from coming in.',
+      'Check your Spam or Junk folder — sometimes a message you are expecting ends up there instead of your inbox.',
+      'If it still seems stuck, restart your device — this often clears up a temporary glitch.'
+    ],
+    tip:'A short delay of a few minutes is normal, especially with large attachments — but if it has been hours, something above is worth checking.' },
+
+  { id:'createaccount', emoji:'📝', label:'Creating a new account', category:'Accounts & Passwords', keywords:['create an account','sign up','set up an account','make an account','new account'],
+    title:'Creating a new account on a website or app',
+    steps:[
+      'Look for a button that says "Sign Up", "Create Account", or "Register" — usually near the "Log In" button.',
+      'Enter your email address or phone number when asked — this is how you will prove the account is yours.',
+      'Choose a password — many sites want at least 8 characters with a mix of letters and numbers.',
+      'You may get a confirmation email or text with a code — enter that code to finish setting up the account.',
+      'Write down your username and password somewhere safe so you can find them later.'
+    ] },
+
+  { id:'passwordmanager', emoji:'🗝️', label:'Remembering your passwords', category:'Accounts & Passwords', keywords:['remember passwords','password manager','too many passwords','keep forgetting password','write down password'],
+    title:'Remembering your passwords safely',
+    steps:[
+      'It is fine to write passwords down on paper kept somewhere safe at home — this is safer than reusing the same easy password everywhere.',
+      'Many phones and browsers offer to "save this password" for you and will fill it in automatically next time — you can accept this for convenience.',
+      'A "password manager" built into your iPhone, Android phone, or browser can store and fill in passwords for you securely.',
+      'Try to avoid using the exact same password for your email and your bank — those two are worth making extra strong and different.'
+    ],
+    warn:'Never share your password over email or phone, even if someone claims to be from tech support or your bank.' },
+
+  { id:'addcontact', emoji:'👤', label:'Adding a new contact', category:'Organization & Reminders', keywords:['add a contact','new contact','save a phone number','add someone to contacts'],
+    title:'Adding a new contact',
+    steps:[
+      'Open the Contacts or Phone app on your device.',
+      'Tap the "+" button, usually in a corner, to add someone new.',
+      'Type their name, then their phone number and/or email address.',
+      'Tap "Save" or "Done" in the corner to finish.',
+      'You can now find them by name next time you want to call, text, or email them.'
+    ] },
+
+  { id:'calendarreminders', emoji:'📅', label:'Setting calendar reminders', category:'Organization & Reminders', keywords:['calendar','set a reminder','remember an appointment','set an alarm for','reminders app'],
+    title:'Setting up calendar reminders',
+    steps:[
+      'Open the Calendar or Reminders app on your phone or computer.',
+      'Tap the "+" button to add a new event or reminder.',
+      'Type what it is for (like "Doctor appointment") and choose the date and time.',
+      'Look for an option like "Alert" or "Notify me" and choose how far ahead you want to be reminded (like 30 minutes before).',
+      'Tap "Save" — your device will send you a notification when it is time.'
+    ] },
+
+  { id:'takephoto', emoji:'📷', label:'Taking a photo or video', category:'Photos & Files', keywords:['take a photo','take a picture','use the camera','record a video'],
+    title:'Taking a photo or video',
+    steps:[
+      'Open the Camera app — usually a circle-shaped icon that looks like a camera.',
+      'Point your phone at what you want to capture and tap the large round button to take a photo.',
+      'To switch to video, look for a "Video" option near the button and tap it before recording.',
+      'To switch between the front camera (for selfies) and back camera, tap the icon with rotating arrows.',
+      'Your photo or video is saved automatically to the Photos app.'
+    ] },
+
+  { id:'organizephotos', emoji:'🗂️', label:'Finding & organizing photos', category:'Photos & Files', keywords:['find my photos','organize photos','photo albums','search for a photo','too many photos'],
+    title:'Finding and organizing your photos',
+    steps:[
+      'Open the Photos app to see everything in order by date, newest first.',
+      'Use the search bar and type what you are looking for (like "dog" or "birthday") — many photo apps can recognize what is in a picture.',
+      'Create an album by tapping "Albums" then "New Album", naming it, and adding photos to keep favorites together.',
+      'Delete blurry or duplicate photos by opening one and tapping the trash can icon to free up space.'
+    ] },
+
+  { id:'sharephotos', emoji:'📤', label:'Sharing photos with family', category:'Photos & Files', keywords:['share photos','send photos to family','share a picture','send pictures'],
+    title:'Sharing photos with family and friends',
+    steps:[
+      'Open the Photos app and select the photo you want to share (tap and hold, or tap "Select" and choose it).',
+      'Tap the Share icon — usually a square with an arrow pointing up.',
+      'Choose how to send it: by text message, email, or an app like WhatsApp.',
+      'Pick the person from your contacts, then tap "Send".'
+    ] },
+
+  { id:'patientportal', emoji:'🏥', label:'Using a patient portal', category:'Health & Assistive Tech', keywords:['mychart','patient portal','see my test results online','doctor portal','message my doctor online'],
+    title:'Using a patient portal (like MyChart)',
+    steps:[
+      'A patient portal is a secure website or app where you can see test results, message your doctor, and see upcoming appointments.',
+      'Your doctor\'s office can give you an activation code, often on an after-visit summary, to set up your account.',
+      'Go to the portal\'s website or download its app, then follow the prompts to create your account using that code.',
+      'Once set up, log in any time to check messages, request prescription refills, or view your records.'
+    ],
+    tip:'If you get stuck setting it up, the office\'s front desk can usually help you activate it over the phone.' },
+
+  { id:'healthtracking', emoji:'⌚', label:'Fitness trackers & health apps', category:'Health & Assistive Tech', keywords:['fitness tracker','smartwatch','step counter','heart rate app','health app'],
+    title:'Fitness trackers, smartwatches, and health apps',
+    steps:[
+      'A fitness tracker or smartwatch counts things like steps, heart rate, or sleep, and sends that information to an app on your phone.',
+      'Download the companion app for your specific device (check the box it came in for the name).',
+      'Follow the app\'s instructions to pair it with your phone, usually via Bluetooth.',
+      'Wear the device throughout the day, and open the app whenever you want to check your progress.'
+    ] },
+
+  { id:'medicalalert', emoji:'🆘', label:'Medical alert devices', category:'Health & Assistive Tech', keywords:['medical alert','life alert','emergency button','fall detection device'],
+    title:'Medical alert / emergency alert devices',
+    steps:[
+      'These are worn as a necklace, bracelet, or clipped to clothing, with a button that calls for help when pressed.',
+      'Pressing the button connects you to a monitoring center, or directly calls a family member or 911, depending on the service.',
+      'It is okay to press it even if you are not fully sure it is an emergency — that is exactly what it is there for.',
+      'Test the device regularly (many have a "test" mode) so you know it is working before you need it.'
+    ] },
+
+  { id:'smarthome', emoji:'🗣️', label:'Using a smart speaker', category:'Health & Assistive Tech', keywords:['alexa','google home','smart speaker','ask alexa','hey google'],
+    title:'Using a smart speaker (Alexa or Google Home)',
+    steps:[
+      'Say the device\'s "wake word" out loud first — usually "Alexa" or "Hey Google" — then ask your question or give a command.',
+      'You can ask it things like "What\'s the weather today?", "Set a timer for 10 minutes", or "Call [family member\'s name]" if set up.',
+      'It can also set reminders — try saying "Remind me to take my medicine at 8pm."',
+      'If it does not understand, try saying your request a little differently, or a bit slower.'
+    ] },
+
+  { id:'onlineshopping', emoji:'🛒', label:'Shopping online safely', category:'Money & Shopping', keywords:['shop online','buy something online','online shopping safe','ordering online'],
+    title:'Shopping online safely',
+    steps:[
+      'Shop on websites and apps you recognize and trust, like well-known stores you already know.',
+      'Look for a small padlock icon next to the web address — this means the connection is secure.',
+      'Add the item to your "Cart", then tap "Checkout" and follow the steps to enter your shipping address and payment details.',
+      'You can track your order afterward, usually through an email confirmation or the "Orders" section of the app.'
+    ],
+    warn:'Be cautious of deals that seem too good to be true, and never pay by gift card or wire transfer for an online purchase — legitimate stores don\'t ask for that.' },
+
+  { id:'billpay', emoji:'🧾', label:'Paying bills online', category:'Money & Shopping', keywords:['pay a bill online','online bill pay','autopay','pay my bill','pay bill','bill'],
+    title:'Paying bills online',
+    steps:[
+      'Log in to the company\'s official website or app (your electric, phone, or credit card company, for example).',
+      'Look for a section called "Billing" or "Pay My Bill".',
+      'Enter your bank or card details once, then you can pay with a few taps each time — or turn on "AutoPay" so it happens automatically each month.',
+      'You will usually get an email receipt each time a payment goes through.'
+    ],
+    tip:'AutoPay can help you avoid late fees, but check your statement each month to make sure the amount looks right.' },
+
+  { id:'confidence', emoji:'🌱', label:'Feeling overwhelmed?', category:'Everyday Basics', keywords:['overwhelmed','not good with technology','confused by my phone','feel dumb','intimidated by technology','scared of breaking it'],
+    title:'Feeling overwhelmed by technology?',
+    steps:[
+      'You are not alone — many people feel this way, and it is not a sign that something is wrong with you.',
+      'You almost never break a device just by tapping the wrong thing — it is okay to explore and try buttons.',
+      'Learning in short sessions of 10 to 15 minutes is often easier than trying to learn everything at once.',
+      'Write down steps that worked for you so you can repeat them next time, instead of relying on memory alone.',
+      'Asking a family member, friend, or a tool like this one for help is completely normal — everyone needs help with technology sometimes.'
     ] }
 ];
 
