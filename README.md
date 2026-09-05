@@ -1,8 +1,8 @@
 # ClearHelp
 
-An easy-to-use tech-troubleshooting hub for older adults, with AI assistance built in. One place to ask a question in plain English, browse step-by-step guides, or reach trusted expert communities for trickier problems — large text, high contrast, no jargon.
+A tech-troubleshooting chat for older adults, inspired by the simplicity of chatting with an AI assistant — no menus to figure out, just tell it what's wrong in your own words. Large text, high contrast, no jargon.
 
-Open `index.html` in a browser to use it. The homepage offers three clear paths — **Ask a question**, **Browse all guides**, and **Expert-level help** — plus quick-tap shortcuts for the most common problems. It answers 54 common questions (Wi-Fi, passwords, scams, video calls, printers, backups, health portals, bill pay, and more, across 12 categories) instantly with no setup required, using a built-in knowledge base. Each guide breaks the fix into small, numbered steps with concrete visual landmarks ("look for a paperclip icon", "usually in a top corner") rather than compressed multi-part instructions, so each step is one simple action. Tap "📚 Guides" to search or browse the full library directly.
+Open `index.html` in a browser to use it. You land straight in a conversation: a warm greeting, a few suggested questions to tap if you're not sure how to describe the problem, and a message box right there — the same way you'd type to Claude. It answers 54 common questions (Wi-Fi, passwords, scams, video calls, printers, backups, health portals, bill pay, and more, across 12 categories) instantly with no setup required, using a built-in knowledge base. Each guide breaks the fix into small, numbered steps with concrete visual landmarks ("look for a paperclip icon", "usually in a top corner") rather than compressed multi-part instructions, so each step is one simple action. Tap "📚 Guides" any time to search or browse the full library instead.
 
 You can also tap the microphone button to ask a question by voice instead of typing, and tap the 🔊 icon on any reply to have it read aloud — both use your browser's built-in speech features, with no data sent anywhere.
 

@@ -77,36 +77,6 @@ a{ color:var(--accent); }
 .hero h2{ font-size:1.6rem; margin-bottom:8px; }
 .hero p{ color:var(--muted); font-size:1.05rem; max-width:620px; margin:0 auto; }
 
-/* ---------- Hub navigation ---------- */
-.hub-nav{
-  max-width:900px;
-  margin:28px auto 0;
-  padding:0 20px;
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:14px;
-}
-.hub-nav-btn{
-  background:var(--panel);
-  border:2px solid var(--border);
-  border-radius:16px;
-  padding:20px 16px;
-  text-align:center;
-  cursor:pointer;
-  font-family:inherit;
-  color:var(--text);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-  box-shadow:0 4px 14px rgba(30,20,0,0.04);
-}
-.hub-nav-btn:hover{ border-color:var(--accent); background:var(--accent-soft); transform:translateY(-1px); }
-.hub-nav-icon{ font-size:1.9rem; }
-.hub-nav-label{ font-weight:800; font-size:1.05rem; }
-.hub-nav-desc{ font-size:0.85rem; color:var(--muted); line-height:1.4; }
-@media(max-width:640px){ .hub-nav{ grid-template-columns:1fr; } }
-
 /* ---------- Quick topics ---------- */
 .topics{
   max-width:900px;
@@ -401,30 +371,12 @@ footer .disclaimer{ margin-bottom:10px; }
 </div>
 
 <div class="hero">
-  <h2>Your hub for tech troubleshooting</h2>
-  <p>One place for all your phone, computer, and internet questions — plain-English guides, plus an AI assistant for anything they don't cover. No tech talk, no judgment.</p>
-</div>
-
-<div class="hub-nav" role="navigation" aria-label="Ways to get help">
-  <button class="hub-nav-btn" onclick="focusChat()">
-    <span class="hub-nav-icon">💬</span>
-    <span class="hub-nav-label">Ask a question</span>
-    <span class="hub-nav-desc">Type or speak — get a plain-English answer</span>
-  </button>
-  <button class="hub-nav-btn" onclick="openLibrary()">
-    <span class="hub-nav-icon">📚</span>
-    <span class="hub-nav-label">Browse all guides</span>
-    <span class="hub-nav-desc">54 step-by-step guides, searchable by topic</span>
-  </button>
-  <button class="hub-nav-btn" onclick="openResources()">
-    <span class="hub-nav-icon">🌐</span>
-    <span class="hub-nav-label">Expert-level help</span>
-    <span class="hub-nav-desc">Trusted communities for trickier problems</span>
-  </button>
+  <h2>Hi, I'm ClearHelp 👋</h2>
+  <p>Tell me what's going on with your phone, computer, or the internet — just like you're talking to a patient friend — and I'll walk you through it step by step, in plain English.</p>
 </div>
 
 <div class="topics">
-  <div class="topics-label">Or just tap a common question:</div>
+  <div class="topics-label">Not sure where to start? Try one of these:</div>
   <div class="topic-grid" id="topicGrid"></div>
 </div>
 
@@ -1311,13 +1263,7 @@ function entryPlainText(entry){
 }
 
 function welcomeMessage(){
-  addBotHTML(`<h3>Hi, I'm ClearHelp 👋</h3><p>Tell me what's going on with your phone, computer, or the internet, and I'll walk you through it step by step. I can also connect to AI for questions my built-in guides don't cover — see Settings below. You can also tap one of the buttons above for a quick answer, or browse everything in 📚 Guides.</p>`);
-}
-
-function focusChat(){
-  const input = document.getElementById('userInput');
-  input.scrollIntoView({ behavior:'smooth', block:'center' });
-  input.focus();
+  addBotHTML(`<p>Go ahead, type your question below — or tap one of the suggestions above if you're not sure how to describe it. If it's something my built-in guides don't cover, I can also connect to AI for a fuller answer (see Settings). Want to browse everything instead? Tap 📚 Guides up top.</p>`);
 }
 
 function buildTopics(){
