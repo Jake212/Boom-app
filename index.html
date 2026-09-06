@@ -1292,7 +1292,7 @@ function findBestMatch(text){
 }
 
 /* ============ Optional AI fallback ============ */
-const AI_MODEL = 'gemini-2.0-flash';
+const AI_MODEL_FALLBACK = 'gemini-2.0-flash';
 const AI_SYSTEM_PROMPT = `You are ClearHelp, a patient tech-support helper for older adults who may not be familiar with technology.
 Answer in very simple plain language, with no jargon. Use short numbered steps when giving instructions.
 Keep replies warm, encouraging, and concise. Use the earlier turns of this conversation as context for follow-up questions.
@@ -1300,8 +1300,15 @@ If a question describes something that sounds like a scam or phishing attempt, c
 const AI_HISTORY_LIMIT = 16;
 let aiHistory = [];
 
-function geminiUrl(key){
-  return `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${encodeURIComponent(key)}`;
+function getModelName(){
+  return localStorage.getItem('clearhelp_ai_model') || AI_MODEL_FALLBACK;
+}
+function setModelName(name){
+  localStorage.setItem('clearhelp_ai_model', name);
+}
+
+function geminiUrl(key, model){
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
 }
 
 function friendlyGeminiError(error, status){
@@ -1309,14 +1316,36 @@ function friendlyGeminiError(error, status){
   if(status === 400 && /API key not valid/i.test(msg)) return "That doesn't look like a valid API key. Double-check you copied the whole thing from Google AI Studio.";
   if(status === 403) return "This key doesn't have permission to use this AI model. Check that it's a Gemini API key, not a different Google service.";
   if(status === 429 || /quota/i.test(msg)) return "This key has run out of free usage for now. Try again later, or check your quota at Google AI Studio.";
-  if(status === 404) return "The AI model this app expects isn't available for this key right now.";
+  if(status === 404) return "None of the AI models this key can access could be found. Double-check the key is a Gemini API key from aistudio.google.com/apikey.";
   return msg || 'Something went wrong talking to the AI service.';
 }
 
-async function callGemini(key, contents){
+/* Asks Google which models this specific key can actually use, and picks the best
+   available one — models get renamed/retired over time, so we don't hardcode a name. */
+async function discoverModel(key){
   let res, data;
   try{
-    res = await fetch(geminiUrl(key), {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
+  }catch(e){ return null; }
+  try{ data = await res.json(); } catch(e){ return null; }
+  if(data.error || !Array.isArray(data.models)) return null;
+
+  const usable = data.models.filter(m => (m.supportedGenerationMethods || []).includes('generateContent'));
+  if(usable.length === 0) return null;
+
+  const byName = n => usable.find(m => m.name === `models/${n}` || m.name === n);
+  const preferred = byName(AI_MODEL_FALLBACK)
+    || usable.find(m => /flash/i.test(m.name) && !/preview|exp|thinking/i.test(m.name))
+    || usable.find(m => /flash/i.test(m.name))
+    || usable[0];
+  return preferred.name.replace(/^models\//, '');
+}
+
+async function callGemini(key, contents, _isRetry){
+  const model = getModelName();
+  let res, data;
+  try{
+    res = await fetch(geminiUrl(key, model), {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({
@@ -1330,6 +1359,15 @@ async function callGemini(key, contents){
   }
   try{ data = await res.json(); }
   catch(e){ throw new Error('The AI service sent back something unexpected. Please try again.'); }
+
+  if(data.error && res.status === 404 && !_isRetry){
+    const discovered = await discoverModel(key);
+    if(discovered && discovered !== model){
+      setModelName(discovered);
+      return callGemini(key, contents, true);
+    }
+  }
+
   if(data.error) throw new Error(friendlyGeminiError(data.error, res.status));
   return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
 }
