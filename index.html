@@ -1321,24 +1321,36 @@ function friendlyGeminiError(error, status){
 }
 
 /* Asks Google which models this specific key can actually use, and picks the best
-   available one — models get renamed/retired over time, so we don't hardcode a name. */
+   available one — models get renamed/retired over time, so we don't hardcode a name.
+   Returns { model, reason } — model is null and reason explains why when none was found. */
 async function discoverModel(key){
   let res, data;
   try{
     res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
-  }catch(e){ return null; }
-  try{ data = await res.json(); } catch(e){ return null; }
-  if(data.error || !Array.isArray(data.models)) return null;
+  }catch(e){
+    return { model:null, reason:"couldn't reach Google to check which models this key can use" };
+  }
+  try{ data = await res.json(); }
+  catch(e){ return { model:null, reason:'got an unreadable response while listing models' }; }
+
+  if(data.error){
+    return { model:null, reason: friendlyGeminiError(data.error, res.status) };
+  }
+  if(!Array.isArray(data.models) || data.models.length === 0){
+    return { model:null, reason:'this key has no AI models available to it at all — it may need the "Generative Language API" enabled on its Google Cloud project' };
+  }
 
   const usable = data.models.filter(m => (m.supportedGenerationMethods || []).includes('generateContent'));
-  if(usable.length === 0) return null;
+  if(usable.length === 0){
+    return { model:null, reason:`this key can see ${data.models.length} model(s), but none of them support generating text replies` };
+  }
 
   const byName = n => usable.find(m => m.name === `models/${n}` || m.name === n);
   const preferred = byName(AI_MODEL_FALLBACK)
     || usable.find(m => /flash/i.test(m.name) && !/preview|exp|thinking/i.test(m.name))
     || usable.find(m => /flash/i.test(m.name))
     || usable[0];
-  return preferred.name.replace(/^models\//, '');
+  return { model: preferred.name.replace(/^models\//, ''), reason:null };
 }
 
 async function callGemini(key, contents, _isRetry){
@@ -1361,11 +1373,12 @@ async function callGemini(key, contents, _isRetry){
   catch(e){ throw new Error('The AI service sent back something unexpected. Please try again.'); }
 
   if(data.error && res.status === 404 && !_isRetry){
-    const discovered = await discoverModel(key);
-    if(discovered && discovered !== model){
-      setModelName(discovered);
+    const discovery = await discoverModel(key);
+    if(discovery.model && discovery.model !== model){
+      setModelName(discovery.model);
       return callGemini(key, contents, true);
     }
+    if(discovery.reason) throw new Error(`Couldn't find a usable AI model for this key: ${discovery.reason}.`);
   }
 
   if(data.error) throw new Error(friendlyGeminiError(data.error, res.status));
