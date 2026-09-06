@@ -1323,7 +1323,7 @@ function friendlyGeminiError(error, status){
 /* Asks Google which models this specific key can actually use, and picks the best
    available one — models get renamed/retired over time, so we don't hardcode a name.
    Returns { model, reason } — model is null and reason explains why when none was found. */
-async function discoverModel(key){
+async function discoverModel(key, excludeModel){
   let res, data;
   try{
     res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
@@ -1345,11 +1345,18 @@ async function discoverModel(key){
     return { model:null, reason:`this key can see ${data.models.length} model(s), but none of them support generating text replies` };
   }
 
-  const byName = n => usable.find(m => m.name === `models/${n}` || m.name === n);
-  const preferred = byName(AI_MODEL_FALLBACK)
-    || usable.find(m => /flash/i.test(m.name) && !/preview|exp|thinking/i.test(m.name))
-    || usable.find(m => /flash/i.test(m.name))
-    || usable[0];
+  // Never re-suggest the model that just failed, even if Google's own list still shows it —
+  // a model can be listed yet still 404 on generateContent (e.g. being decommissioned).
+  const candidates = excludeModel
+    ? usable.filter(m => m.name !== `models/${excludeModel}` && m.name !== excludeModel)
+    : usable;
+  if(candidates.length === 0){
+    return { model:null, reason:`Google only lists "${excludeModel}" for this key, and that model just failed — try again in a minute, or check aistudio.google.com/apikey for other available models` };
+  }
+
+  const preferred = candidates.find(m => /flash/i.test(m.name) && !/preview|exp|thinking/i.test(m.name))
+    || candidates.find(m => /flash/i.test(m.name))
+    || candidates[0];
   return { model: preferred.name.replace(/^models\//, ''), reason:null };
 }
 
@@ -1373,12 +1380,12 @@ async function callGemini(key, contents, _isRetry){
   catch(e){ throw new Error('The AI service sent back something unexpected. Please try again.'); }
 
   if(data.error && res.status === 404 && !_isRetry){
-    const discovery = await discoverModel(key);
-    if(discovery.model && discovery.model !== model){
+    const discovery = await discoverModel(key, model);
+    if(discovery.model){
       setModelName(discovery.model);
       return callGemini(key, contents, true);
     }
-    if(discovery.reason) throw new Error(`Couldn't find a usable AI model for this key: ${discovery.reason}.`);
+    throw new Error(`Couldn't find a usable AI model for this key${discovery.reason ? ': ' + discovery.reason : ''}.`);
   }
 
   if(data.error) throw new Error(friendlyGeminiError(data.error, res.status));
