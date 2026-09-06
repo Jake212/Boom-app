@@ -1316,6 +1316,7 @@ function friendlyGeminiError(error, status){
   if(status === 400 && /API key not valid/i.test(msg)) return "That doesn't look like a valid API key. Double-check you copied the whole thing from Google AI Studio.";
   if(status === 403) return "This key doesn't have permission to use this AI model. Check that it's a Gemini API key, not a different Google service.";
   if(status === 429 || /quota/i.test(msg)) return "This key has run out of free usage for now. Try again later, or check your quota at Google AI Studio.";
+  if(status === 503 || /overloaded|high demand/i.test(msg)) return "Google's AI service is temporarily overloaded with requests right now. This isn't a problem with your key — please wait a moment and try again.";
   if(status === 404) return "None of the AI models this key can access could be found. Double-check the key is a Gemini API key from aistudio.google.com/apikey.";
   return msg || 'Something went wrong talking to the AI service.';
 }
@@ -1360,7 +1361,7 @@ async function discoverModel(key, excludeModel){
   return { model: preferred.name.replace(/^models\//, ''), reason:null };
 }
 
-async function callGemini(key, contents, _isRetry){
+async function callGemini(key, contents, _isRetry, _retriedOverload){
   const model = getModelName();
   let res, data;
   try{
@@ -1392,6 +1393,13 @@ async function callGemini(key, contents, _isRetry){
     // never fall through to a vague message; surface Google's actual response so
     // this is diagnosable instead of a guess.
     throw new Error(`Found a model for this key (${model}) but calling it failed (HTTP ${res.status}${data.error?.message ? ': ' + data.error.message : ''}). This looks like a Google-side issue rather than something in ClearHelp — try again in a minute.`);
+  }
+
+  // Google's model is momentarily overloaded — this is transient, so wait briefly and
+  // retry once automatically before bothering the user with an error.
+  if(data.error && res.status === 503 && !_retriedOverload){
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    return callGemini(key, contents, _isRetry, true);
   }
 
   if(data.error) throw new Error(friendlyGeminiError(data.error, res.status));
