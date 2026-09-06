@@ -258,6 +258,8 @@ footer .disclaimer{ margin-bottom:10px; }
 .key-status.checking{ color:var(--muted); }
 .key-status.ok{ color:var(--good); background:#eafaf0; }
 .key-status.error{ color:var(--warn); background:var(--warn-bg); }
+.autospeak-label{ display:flex; align-items:center; gap:10px; margin:0 0 16px; font-size:0.95rem; cursor:pointer; }
+.autospeak-label input{ width:20px; height:20px; cursor:pointer; }
 .modal-actions{ display:flex; gap:10px; justify-content:flex-end; }
 .modal-actions button{ min-height:44px; border-radius:10px; padding:0 18px; font-size:0.95rem; font-weight:700; cursor:pointer; }
 .btn-secondary{ background:var(--bg); border:2px solid var(--border); color:var(--text); }
@@ -407,6 +409,10 @@ footer .disclaimer{ margin-bottom:10px; }
     <p>ClearHelp already answers common questions on its own. If you'd like it to also handle questions outside that list, you can add your own free Google Gemini API key. It is saved only in this browser, never sent anywhere else, and never stored in this app's code.</p>
     <input type="password" id="apiKeyInput" placeholder="Paste your Gemini API key here" autocomplete="off">
     <div class="key-status" id="apiKeyStatus" hidden></div>
+    <label class="autospeak-label" for="autoSpeakToggle">
+      <input type="checkbox" id="autoSpeakToggle" onchange="setAutoSpeak(this.checked)">
+      🔊 Read replies out loud automatically
+    </label>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="clearApiKey()">Remove key</button>
       <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
@@ -466,9 +472,13 @@ applyScale();
 function openSettings(){
   document.getElementById('apiKeyInput').value = localStorage.getItem('clearhelp_api_key') || '';
   setKeyStatus(null);
+  document.getElementById('autoSpeakToggle').checked = getAutoSpeak();
   document.getElementById('settingsModal').classList.add('open');
 }
 function closeSettings(){ document.getElementById('settingsModal').classList.remove('open'); }
+
+function getAutoSpeak(){ return localStorage.getItem('clearhelp_autospeak') === '1'; }
+function setAutoSpeak(on){ localStorage.setItem('clearhelp_autospeak', on ? '1' : '0'); }
 
 function setKeyStatus(kind, text){
   const el = document.getElementById('apiKeyStatus');
@@ -1231,6 +1241,7 @@ function addBotHTML(html, opts){
   el.innerHTML = `<div class="msg-avatar">🤖</div><div class="bubble" id="${bubbleId}">${html}${opts.ai?'<span class="ai-badge">AI</span>':''}${speakBtn}</div>`;
   chatLog.appendChild(el);
   scrollToBottom();
+  if(SPEECH_SYNTHESIS_SUPPORTED && getAutoSpeak()) speakBubble(bubbleId);
   return el;
 }
 
