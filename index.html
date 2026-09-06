@@ -1316,7 +1316,7 @@ function friendlyGeminiError(error, status){
   if(status === 400 && /API key not valid/i.test(msg)) return "That doesn't look like a valid API key. Double-check you copied the whole thing from Google AI Studio.";
   if(status === 403) return "This key doesn't have permission to use this AI model. Check that it's a Gemini API key, not a different Google service.";
   if(status === 429 || /quota/i.test(msg)) return "This key has run out of free usage for now. Try again later, or check your quota at Google AI Studio.";
-  if(status === 503 || /overloaded|high demand/i.test(msg)) return "Google's AI service is temporarily overloaded with requests right now. This isn't a problem with your key — please wait a moment and try again.";
+  if(status === 503 || /overloaded|high demand/i.test(msg)) return "Google's AI service is temporarily overloaded with requests right now — this app already tried a few times automatically. This isn't a problem with your key. Please wait a minute or two and try again.";
   if(status === 404) return "None of the AI models this key can access could be found. Double-check the key is a Gemini API key from aistudio.google.com/apikey.";
   return msg || 'Something went wrong talking to the AI service.';
 }
@@ -1355,13 +1355,19 @@ async function discoverModel(key, excludeModel){
     return { model:null, reason:`Google only lists "${excludeModel}" for this key, and that model just failed — try again in a minute, or check aistudio.google.com/apikey for other available models` };
   }
 
-  const preferred = candidates.find(m => /flash/i.test(m.name) && !/preview|exp|thinking/i.test(m.name))
+  // Prefer "flash-lite" first — it's built for high throughput and tends to have more
+  // free-tier headroom, so it's less likely to be overloaded than the flagship flash model.
+  const preferred = candidates.find(m => /flash-lite/i.test(m.name) && !/preview|exp|thinking/i.test(m.name))
+    || candidates.find(m => /flash/i.test(m.name) && !/preview|exp|thinking/i.test(m.name))
     || candidates.find(m => /flash/i.test(m.name))
     || candidates[0];
   return { model: preferred.name.replace(/^models\//, ''), reason:null };
 }
 
-async function callGemini(key, contents, _isRetry, _retriedOverload){
+const OVERLOAD_RETRY_DELAYS_MS = [2000, 4000];
+
+async function callGemini(key, contents, _isRetry, _overloadAttempt){
+  _overloadAttempt = _overloadAttempt || 0;
   const model = getModelName();
   let res, data;
   try{
@@ -1396,10 +1402,21 @@ async function callGemini(key, contents, _isRetry, _retriedOverload){
   }
 
   // Google's model is momentarily overloaded — this is transient, so wait briefly and
-  // retry once automatically before bothering the user with an error.
-  if(data.error && res.status === 503 && !_retriedOverload){
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    return callGemini(key, contents, _isRetry, true);
+  // retry a couple of times automatically before bothering the user with an error.
+  if(data.error && res.status === 503){
+    if(_overloadAttempt < OVERLOAD_RETRY_DELAYS_MS.length){
+      await new Promise(resolve => setTimeout(resolve, OVERLOAD_RETRY_DELAYS_MS[_overloadAttempt]));
+      return callGemini(key, contents, _isRetry, _overloadAttempt + 1);
+    }
+    // Same model is still overloaded after repeated retries — if this key can reach a
+    // different model, switch to it once rather than giving up on this one specific model.
+    if(!_isRetry){
+      const discovery = await discoverModel(key, model);
+      if(discovery.model && discovery.model !== model){
+        setModelName(discovery.model);
+        return callGemini(key, contents, true, 0);
+      }
+    }
   }
 
   if(data.error) throw new Error(friendlyGeminiError(data.error, res.status));
