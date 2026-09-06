@@ -1379,13 +1379,19 @@ async function callGemini(key, contents, _isRetry){
   try{ data = await res.json(); }
   catch(e){ throw new Error('The AI service sent back something unexpected. Please try again.'); }
 
-  if(data.error && res.status === 404 && !_isRetry){
-    const discovery = await discoverModel(key, model);
-    if(discovery.model){
-      setModelName(discovery.model);
-      return callGemini(key, contents, true);
+  if(data.error && res.status === 404){
+    if(!_isRetry){
+      const discovery = await discoverModel(key, model);
+      if(discovery.model){
+        setModelName(discovery.model);
+        return callGemini(key, contents, true);
+      }
+      throw new Error(`Couldn't find a usable AI model for this key${discovery.reason ? ': ' + discovery.reason : ''}.`);
     }
-    throw new Error(`Couldn't find a usable AI model for this key${discovery.reason ? ': ' + discovery.reason : ''}.`);
+    // Already retried once with a freshly discovered model, and even that 404'd —
+    // never fall through to a vague message; surface Google's actual response so
+    // this is diagnosable instead of a guess.
+    throw new Error(`Found a model for this key (${model}) but calling it failed (HTTP ${res.status}${data.error?.message ? ': ' + data.error.message : ''}). This looks like a Google-side issue rather than something in ClearHelp — try again in a minute.`);
   }
 
   if(data.error) throw new Error(friendlyGeminiError(data.error, res.status));
